@@ -1,0 +1,37 @@
+server:
+  port: 8083
+
+spring:
+  security:
+    user:
+      name: disabled
+      password: disabled
+  application:
+    name: profiles-service
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+jwt:
+  secret: ${JWT_SECRET}
