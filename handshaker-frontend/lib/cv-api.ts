@@ -6,7 +6,9 @@ import type {
   Accommodation,
 } from "./cv-types"
 
-const API_BASE = "http://localhost:8083"
+// const API_BASE = "http://localhost:8083"
+const API_BASE = "http://142.132.181.45:8083"
+
 
 /**
  * Authenticated fetch
