@@ -1,4 +1,3 @@
-import { getToken } from "./auth"
 import type {
   PersonalInfo,
   LegalStatus,
@@ -9,20 +8,27 @@ import type {
 
 const API_BASE = "http://localhost:8083"
 
+/**
+ * Authenticated fetch
+ * - JWT is sent automatically via HttpOnly cookie
+ * - NO Authorization header
+ * - credentials: "include" is required
+ */
 async function authFetch(url: string, options: RequestInit = {}) {
-  const token = getToken()
-  if (!token) throw new Error("Not authenticated")
-
   const res = await fetch(url, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
       ...options.headers,
     },
   })
 
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error("Not authenticated")
+    }
+
     const errorText = await res.text()
     throw new Error(errorText || "Request failed")
   }
@@ -31,35 +37,35 @@ async function authFetch(url: string, options: RequestInit = {}) {
 }
 
 export async function savePersonalInfo(data: PersonalInfo) {
-  return authFetch(`${API_BASE}/users/me/personal`, {
+  await authFetch(`${API_BASE}/users/me/personal`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveLegalStatus(data: LegalStatus) {
-  return authFetch(`${API_BASE}/users/me/legal`, {
+  await authFetch(`${API_BASE}/users/me/legal`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveJobPreferences(data: JobPreferences) {
-  return authFetch(`${API_BASE}/users/me/job-preferences`, {
+  await authFetch(`${API_BASE}/users/me/job-preferences`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveLanguages(data: Language[]) {
-  return authFetch(`${API_BASE}/users/me/languages`, {
+  await authFetch(`${API_BASE}/users/me/languages`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveAccommodation(data: Accommodation) {
-  return authFetch(`${API_BASE}/users/me/accommodation`, {
+  await authFetch(`${API_BASE}/users/me/accommodation`, {
     method: "PUT",
     body: JSON.stringify(data),
   })

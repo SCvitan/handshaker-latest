@@ -1,11 +1,13 @@
 package com.handshaker.profiles_service.service;
 
+import com.handshaker.events.UserRegisteredEvent;
 import com.handshaker.profiles_service.model.*;
 import com.handshaker.profiles_service.config.RabbitConfig;
 import com.handshaker.profiles_service.dto.*;
-import com.handshaker.profiles_service.events.UserRegisteredEvent;
 import com.handshaker.profiles_service.repository.UserProfileRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
@@ -18,17 +20,20 @@ public class UserProfilesService {
 
     private final UserProfileRepository repository;
     private final ProfileCompletenessCalculator completenessCalculator;
+    private static final Logger log = LoggerFactory.getLogger(UserProfilesService.class);
 
     public UserProfilesService(UserProfileRepository repository, ProfileCompletenessCalculator completenessCalculator) {
         this.repository = repository;
         this.completenessCalculator = completenessCalculator;
     }
 
+
     @RabbitListener(queues = RabbitConfig.USER_REGISTERED_QUEUE)
     public void handleUserRegistered(UserRegisteredEvent event){
-        if (repository.existsById(event.getUserId())){
-            return;
-        }
+        log.info("Received UserRegisteredEvent for {} with email {}", event.getUserId(), event.getEmail());
+    //    if (repository.existsById(event.getUserId())){
+    //        return;
+    //    }
 
         UserProfile profile = new UserProfile();
         profile.setId(event.getUserId());
@@ -39,7 +44,9 @@ public class UserProfilesService {
 
     @Transactional
     public void updatePersonal(UUID userId, UpdatePersonalInfoRequest req) {
-        UserProfile profile = repository.findById(userId).orElseThrow();
+        UserProfile profile = repository.findById(userId).orElseThrow(
+                () -> new RuntimeException("Cannot find user!")
+        );
 
         PersonalInfo info = profile.getPersonalInfo();
         if (info == null) {

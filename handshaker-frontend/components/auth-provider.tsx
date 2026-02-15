@@ -10,26 +10,19 @@ import {
 } from "react"
 import {
   type UserRole,
-  getToken,
-  getUser,
-  saveToken,
-  removeToken,
+  type User,
   loginUser,
   registerUser,
+  getCurrentUser,
+  logoutUser,
 } from "@/lib/auth"
-
-interface User {
-  id: string
-  email: string
-  role: UserRole
-}
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, role: UserRole) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -38,63 +31,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  /**
+   * Restore session on page refresh
+   * Cookie is sent automatically
+   */
   useEffect(() => {
-    const existingUser = getUser()
-    if (existingUser) {
-      const token = getToken()
-      if (token) {
-        try {
-          const base64Url = token.split(".")[1]
-          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/")
-          const payload = JSON.parse(
-            decodeURIComponent(
-              atob(base64)
-                .split("")
-                .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-                .join("")
-            )
-          )
-          setUser({
-            id: existingUser.id,
-            role: existingUser.role,
-            email: payload.email || payload.sub?.split("@")[0] || "",
-          })
-        } catch {
-          setUser(existingUser)
-        }
+    const restoreSession = async () => {
+      try {
+        const currentUser = await getCurrentUser()
+        setUser(currentUser)
+      } finally {
+        setIsLoading(false)
       }
     }
-    setIsLoading(false)
+
+    restoreSession()
   }, [])
 
+  /**
+   * LOGIN
+   */
   const login = useCallback(async (email: string, password: string) => {
-    const data = await loginUser(email, password)
-    saveToken(data.token)
-    const decoded = getUser()
-    if (decoded) {
-      setUser({ ...decoded, email })
-    }
+    const user = await loginUser(email, password)
+    setUser(user)
   }, [])
 
+  /**
+   * REGISTER
+   */
   const register = useCallback(
     async (email: string, password: string, role: UserRole) => {
-      const data = await registerUser(email, password, role)
-      saveToken(data.token)
-      const decoded = getUser()
-      if (decoded) {
-        setUser({ ...decoded, email })
-      }
+      const user = await registerUser(email, password, role)
+      setUser(user)
     },
     []
   )
 
-  const logout = useCallback(() => {
-    removeToken()
+  /**
+   * LOGOUT
+   */
+  const logout = useCallback(async () => {
+    await logoutUser()
     setUser(null)
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        register,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
@@ -102,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider")
   }
   return context

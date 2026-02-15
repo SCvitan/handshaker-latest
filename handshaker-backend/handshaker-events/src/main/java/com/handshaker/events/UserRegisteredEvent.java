@@ -1,4 +1,4 @@
-package com.handshaker.profiles_service.events;
+package com.handshaker.events;
 
 import java.util.UUID;
 
