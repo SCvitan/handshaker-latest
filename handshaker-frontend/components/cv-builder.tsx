@@ -8,6 +8,7 @@ import { LegalStatusStep } from "./cv-builder/legal-status-step"
 import { JobPreferencesStep } from "./cv-builder/job-preferences-step"
 import { LanguagesStep } from "./cv-builder/languages-step"
 import { AccommodationStep } from "./cv-builder/accommodation-step"
+import { EmploymentCurrentStep } from "./cv-builder/employment-current-step"
 import type { CVData } from "@/lib/cv-types"
 import { INITIAL_CV_DATA } from "@/lib/cv-types"
 import {
@@ -16,6 +17,7 @@ import {
   saveJobPreferences,
   saveLanguages,
   saveAccommodation,
+  saveEmploymentCurrent,
 } from "@/lib/cv-api"
 
 const STEPS = [
@@ -24,6 +26,7 @@ const STEPS = [
   { id: 3, name: "Job Preferences" },
   { id: 4, name: "Languages" },
   { id: 5, name: "Accommodation" },
+  { id: 6, name: "Current Work" },
 ]
 
 export function CVBuilder() {
@@ -50,6 +53,10 @@ export function CVBuilder() {
 
   const updateAccommodation = (data: CVData["accommodation"]) => {
     setCVData((prev) => ({ ...prev, accommodation: data }))
+  }
+
+  const updateEmploymentCurrent = (data: CVData["employmentCurrent"]) => {
+    setCVData((prev) => ({ ...prev, employmentCurrent: data }))
   }
 
   async function nextStep() {
@@ -89,6 +96,9 @@ export function CVBuilder() {
           break
         case 5:
           await saveAccommodation(cvData.accommodation)
+          break
+        case 6:
+          await saveEmploymentCurrent(cvData.employmentCurrent)
           break
       }
     } catch (err) {
@@ -166,9 +176,20 @@ export function CVBuilder() {
           <AccommodationStep
             data={cvData.accommodation}
             onUpdate={updateAccommodation}
+            onNext={nextStep}
             onBack={prevStep}
             onSaveAndHome={handleSaveAndHome}
-            onFinish={handleFinish}
+            isSaving={isSaving}
+          />
+        )}
+
+        {currentStep === 6 && (
+          <EmploymentCurrentStep
+            data={cvData.employmentCurrent}
+            onUpdate={updateEmploymentCurrent}
+            onBack={prevStep}
+            onSaveAndHome={handleSaveAndHome}
+            onFinish={() => handleFinish()}
             isSaving={isSaving}
           />
         )}

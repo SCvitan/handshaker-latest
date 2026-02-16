@@ -18,8 +18,8 @@ export function Navbar() {
   const { user, isLoading, logout } = useAuth()
   const router = useRouter()
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     router.push("/")
   }
 
@@ -39,12 +39,20 @@ export function Navbar() {
             Home
           </Link>
           {user && user.role === "USER" && (
-            <Link
-              href="/cv-builder"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Build CV
-            </Link>
+            <>
+              <Link
+                href="/profile"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                My Profile
+              </Link>
+              <Link
+                href="/cv-builder"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Build CV
+              </Link>
+            </>
           )}
           {user && user.role === "COMPANY" && (
             <Link
@@ -87,13 +95,22 @@ export function Navbar() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {user.role === "USER" && (
-                  <DropdownMenuItem
-                    onClick={() => router.push("/cv-builder")}
-                    className="cursor-pointer"
-                  >
-                    <FileText className="mr-2 size-4" />
-                    Build CV
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/profile")}
+                      className="cursor-pointer"
+                    >
+                      <User className="mr-2 size-4" />
+                      My Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/cv-builder")}
+                      className="cursor-pointer"
+                    >
+                      <FileText className="mr-2 size-4" />
+                      Build CV
+                    </DropdownMenuItem>
+                  </>
                 )}
                 {user.role === "COMPANY" && (
                   <DropdownMenuItem

@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ArrowLeft, Home, MapPin, Building, Save } from "lucide-react"
+import { ArrowLeft, ArrowRight, Home, MapPin, Building } from "lucide-react"
 import type { Accommodation } from "@/lib/cv-types"
 import {
   ACCOMMODATION_PROVIDER_OPTIONS,
@@ -22,18 +22,18 @@ import {
 interface AccommodationStepProps {
   data: Accommodation
   onUpdate: (data: Accommodation) => void
+  onNext: () => void
   onBack: () => void
   onSaveAndHome: () => void
-  onFinish: () => void
   isSaving: boolean
 }
 
 export function AccommodationStep({
   data,
   onUpdate,
+  onNext,
   onBack,
   onSaveAndHome,
-  onFinish,
   isSaving,
 }: AccommodationStepProps) {
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,9 +218,9 @@ export function AccommodationStep({
             {isSaving ? "Saving..." : "Save & Return Home"}
           </Button>
         </div>
-        <Button onClick={onFinish} disabled={isSaving} className="gap-2">
-          <Save className="size-4" />
-          {isSaving ? "Saving..." : "Save & Finish"}
+        <Button onClick={onNext} disabled={isSaving} className="gap-2">
+          {isSaving ? "Saving..." : "Continue"}
+          <ArrowRight className="size-4" />
         </Button>
       </div>
     </div>

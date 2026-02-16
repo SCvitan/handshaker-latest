@@ -9,8 +9,8 @@ import {
   type ReactNode,
 } from "react"
 import {
-  type UserRole,
   type User,
+  type UserRole,
   loginUser,
   registerUser,
   getCurrentUser,
@@ -31,60 +31,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  /**
-   * Restore session on page refresh
-   * Cookie is sent automatically
-   */
+  // Restore session from HttpOnly cookie on mount
   useEffect(() => {
-    const restoreSession = async () => {
-      try {
-        const currentUser = await getCurrentUser()
-        setUser(currentUser)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    restoreSession()
+    getCurrentUser()
+      .then((u) => setUser(u))
+      .finally(() => setIsLoading(false))
   }, [])
 
-  /**
-   * LOGIN
-   */
   const login = useCallback(async (email: string, password: string) => {
-    const user = await loginUser(email, password)
-    setUser(user)
+    const u = await loginUser(email, password)
+    setUser(u)
   }, [])
 
-  /**
-   * REGISTER
-   */
   const register = useCallback(
     async (email: string, password: string, role: UserRole) => {
-      const user = await registerUser(email, password, role)
-      setUser(user)
+      const u = await registerUser(email, password, role)
+      setUser(u)
     },
     []
   )
 
-  /**
-   * LOGOUT
-   */
   const logout = useCallback(async () => {
     await logoutUser()
     setUser(null)
   }, [])
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        login,
-        register,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   )
@@ -92,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider")
   }
   return context

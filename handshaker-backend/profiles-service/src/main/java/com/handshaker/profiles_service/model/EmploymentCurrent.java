@@ -29,7 +29,7 @@ public class EmploymentCurrent {
     @Embedded
     private Address workAddress;
 
-    protected EmploymentCurrent() {}
+    public EmploymentCurrent() {}
 
     public UUID getId() {
         return id;

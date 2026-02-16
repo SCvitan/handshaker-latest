@@ -1,5 +1,5 @@
-// const API_BASE = "http://localhost:8080"
-const API_BASE = "http://142.132.181.45:8080"
+// const API_BASE = "http://142.132.181.45:8080"
+const API_BASE = "http://localhost:8080"
 
 export type UserRole = "USER" | "COMPANY"
 
@@ -12,7 +12,7 @@ export interface User {
 /**
  * LOGIN
  * - backend sets HttpOnly JWT cookie
- * - backend returns user
+ * - backend returns user object
  */
 export async function loginUser(
   email: string,
@@ -20,15 +20,14 @@ export async function loginUser(
 ): Promise<User> {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include", // ⭐ VERY IMPORTANT
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ email, password }),
   })
 
   if (!res.ok) {
-    throw new Error(await res.text())
+    const errorText = await res.text()
+    throw new Error(errorText || "Login failed")
   }
 
   return res.json()
@@ -37,7 +36,7 @@ export async function loginUser(
 /**
  * REGISTER
  * - backend sets HttpOnly JWT cookie
- * - backend returns user
+ * - backend returns user object
  */
 export async function registerUser(
   email: string,
@@ -46,15 +45,14 @@ export async function registerUser(
 ): Promise<User> {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include", // ⭐ VERY IMPORTANT
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ email, password, role }),
   })
 
   if (!res.ok) {
-    throw new Error(await res.text())
+    const errorText = await res.text()
+    throw new Error(errorText || "Registration failed")
   }
 
   return res.json()
@@ -62,24 +60,25 @@ export async function registerUser(
 
 /**
  * RESTORE SESSION
- * - uses cookie automatically
- * - called on app boot / refresh
+ * - uses HttpOnly cookie automatically
+ * - called on app boot / page refresh
  */
 export async function getCurrentUser(): Promise<User | null> {
-  const res = await fetch(`${API_BASE}/me`, {
-    credentials: "include",
-  })
+  try {
+    const res = await fetch(`${API_BASE}/me`, {
+      credentials: "include",
+    })
 
-  if (!res.ok) {
+    if (!res.ok) return null
+    return res.json()
+  } catch {
     return null
   }
-
-  return res.json()
 }
 
 /**
  * LOGOUT
- * - backend should clear cookie
+ * - backend clears the HttpOnly cookie
  */
 export async function logoutUser(): Promise<void> {
   await fetch(`${API_BASE}/auth/logout`, {

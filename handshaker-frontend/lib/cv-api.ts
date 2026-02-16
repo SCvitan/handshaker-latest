@@ -4,17 +4,18 @@ import type {
   JobPreferences,
   Language,
   Accommodation,
+  UserProfile,
+  EmploymentCurrent,
 } from "./cv-types"
 
-// const API_BASE = "http://localhost:8083"
-const API_BASE = "http://142.132.181.45:8083"
-
+// const API_BASE = "http://142.132.181.45:8083"
+const API_BASE = "http://localhost:8083"
 
 /**
  * Authenticated fetch
  * - JWT is sent automatically via HttpOnly cookie
- * - NO Authorization header
- * - credentials: "include" is required
+ * - NO Authorization header needed
+ * - credentials: "include" is required for cookies
  */
 async function authFetch(url: string, options: RequestInit = {}) {
   const res = await fetch(url, {
@@ -30,7 +31,6 @@ async function authFetch(url: string, options: RequestInit = {}) {
     if (res.status === 401) {
       throw new Error("Not authenticated")
     }
-
     const errorText = await res.text()
     throw new Error(errorText || "Request failed")
   }
@@ -38,36 +38,48 @@ async function authFetch(url: string, options: RequestInit = {}) {
   return res
 }
 
+export async function fetchProfile(): Promise<UserProfile> {
+  const res = await authFetch(`${API_BASE}/users/me`)
+  return res.json()
+}
+
 export async function savePersonalInfo(data: PersonalInfo) {
-  await authFetch(`${API_BASE}/users/me/personal`, {
+  return authFetch(`${API_BASE}/users/me/personal`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveLegalStatus(data: LegalStatus) {
-  await authFetch(`${API_BASE}/users/me/legal`, {
+  return authFetch(`${API_BASE}/users/me/legal`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveJobPreferences(data: JobPreferences) {
-  await authFetch(`${API_BASE}/users/me/job-preferences`, {
+  return authFetch(`${API_BASE}/users/me/job-preferences`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveLanguages(data: Language[]) {
-  await authFetch(`${API_BASE}/users/me/languages`, {
+  return authFetch(`${API_BASE}/users/me/languages`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveAccommodation(data: Accommodation) {
-  await authFetch(`${API_BASE}/users/me/accommodation`, {
+  return authFetch(`${API_BASE}/users/me/accommodation`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function saveEmploymentCurrent(data: EmploymentCurrent) {
+  return authFetch(`${API_BASE}/users/me/employment-current`, {
     method: "PUT",
     body: JSON.stringify(data),
   })

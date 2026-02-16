@@ -69,6 +69,16 @@ public class UserProfileController {
         service.updateAccommodation(userId, request);
     }
 
+    @PutMapping("/me/employment-current")
+    public void  updateEmploymentCurrent(
+            Authentication authentication,
+            @RequestBody EmploymentCurrentRequest request
+    ) {
+        UUID userId = UUID.fromString(authentication.getPrincipal().toString());
+        service.updateEmploymentCurrent(userId, request);
+
+    }
+
     @PostMapping("/search")
     public List<UserSearchResponse> search(Authentication authentication,
                                            @RequestBody UserSearchRequest request) {

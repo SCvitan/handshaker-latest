@@ -68,7 +68,7 @@ public class UserProfilesService {
     @Transactional
     public UserProfileResponse getMe(UUID userId) {
 
-        UserProfile profile = getOrCreateProfile(userId);
+        UserProfile profile = getProfile(userId);
 
         return new UserProfileResponse(
                 profile.getId(),
@@ -78,6 +78,7 @@ public class UserProfilesService {
                 mapPreferences(profile.getJobPreferences()),
                 mapLanguages(profile.getLanguageSkills()),
                 mapAccommodation(profile.getAccommodation()),
+                mapEmploymentCurrent(profile.getEmploymentCurrent()),
                 completenessCalculator.calculate(profile)
         );
     }
@@ -85,7 +86,7 @@ public class UserProfilesService {
     @Transactional
     public void replaceLanguages(UUID userId, List<LanguageSkillRequest> request) {
 
-        UserProfile profile = getOrCreateProfile(userId);
+        UserProfile profile = getProfile(userId);
 
         profile.getLanguageSkills().clear();
 
@@ -105,7 +106,7 @@ public class UserProfilesService {
     @Transactional
     public void updateLegal(UUID userId, UpdateLegalStatusRequest req) {
 
-        UserProfile profile = getOrCreateProfile(userId);
+        UserProfile profile = getProfile(userId);
 
         LegalStatus legal = profile.getLegalStatus();
         if (legal == null) {
@@ -127,7 +128,7 @@ public class UserProfilesService {
     @Transactional
     public void updateJobPreferences(UUID userId, UpdateJobPreferencesRequest req) {
 
-        UserProfile profile = getOrCreateProfile(userId);
+        UserProfile profile = getProfile(userId);
 
         JobPreferences prefs = profile.getJobPreferences();
         if (prefs == null) {
@@ -150,7 +151,7 @@ public class UserProfilesService {
     @Transactional
     public void updateLanguages(UUID userId, List<LanguageSkillRequest> request) {
 
-        UserProfile profile = getOrCreateProfile(userId);
+        UserProfile profile = getProfile(userId);
 
         profile.getLanguageSkills().clear();
 
@@ -170,7 +171,7 @@ public class UserProfilesService {
     @Transactional
     public void updateAccommodation(UUID userId, UpdateAccommodationRequest req) {
 
-        UserProfile profile = getOrCreateProfile(userId);
+        UserProfile profile = getProfile(userId);
 
         Accommodation accommodation = profile.getAccommodation();
         if (accommodation == null) {
@@ -199,6 +200,51 @@ public class UserProfilesService {
     }
 
     @Transactional
+    public void updateEmploymentCurrent(
+            UUID userId,
+            EmploymentCurrentRequest request
+    ) {
+
+        UserProfile profile = getProfile(userId);
+
+        EmploymentCurrent employment = profile.getEmploymentCurrent();
+
+        if (employment == null) {
+            employment = new EmploymentCurrent();
+            employment.setId(profile.getId()); // VERY IMPORTANT for @MapsId
+            employment.setProfile(profile);
+            profile.setEmploymentCurrent(employment);
+        }
+
+        employment.setIndustry(request.industry());
+        employment.setJobTitleInCroatia(request.jobTitleInCroatia());
+        employment.setEmployerName(request.employerName());
+        employment.setEmployerAddress(request.employerAddress());
+        employment.setEmployerContactInfo(request.employerContactInfo());
+        employment.setCityOfWork(request.cityOfWork());
+        employment.setNumberOfPreviousEmployersInCroatia(
+                request.numberOfPreviousEmployersInCroatia()
+        );
+
+        if (request.workAddress() != null) {
+            Address address = employment.getWorkAddress();
+
+            if (address == null) {
+                address = new Address();
+            }
+
+            address.setPostalCode(request.workAddress().postalCode());
+            address.setCity(request.workAddress().city());
+            address.setStreet(request.workAddress().street());
+            address.setHouseNumber(request.workAddress().houseNumber());
+
+            employment.setWorkAddress(address);
+        } else {
+            employment.setWorkAddress(null);
+        }
+    }
+
+    @Transactional
     public List<UserSearchResponse> search(UserSearchRequest request) {
 
         List<UserProfile> users =
@@ -215,6 +261,35 @@ public class UserProfilesService {
                 )
                 .map(entry -> mapToSearchResponse(entry.getKey(), entry.getValue()))
                 .toList();
+    }
+
+    private EmploymentCurrentResponse mapEmploymentCurrent(EmploymentCurrent employmentCurrent) {
+
+        if (employmentCurrent == null) {
+            return null;
+        }
+
+        AddressResponse addressResponse = null;
+
+        if (employmentCurrent.getWorkAddress() != null) {
+            addressResponse = new AddressResponse(
+                    employmentCurrent.getWorkAddress().getPostalCode(),
+                    employmentCurrent.getWorkAddress().getCity(),
+                    employmentCurrent.getWorkAddress().getStreet(),
+                    employmentCurrent.getWorkAddress().getHouseNumber()
+            );
+        }
+
+        return new EmploymentCurrentResponse(
+                employmentCurrent.getIndustry(),
+                employmentCurrent.getJobTitleInCroatia(),
+                employmentCurrent.getEmployerName(),
+                employmentCurrent.getEmployerAddress(),
+                employmentCurrent.getEmployerContactInfo(),
+                employmentCurrent.getCityOfWork(),
+                employmentCurrent.getNumberOfPreviousEmployersInCroatia(),
+                addressResponse
+        );
     }
 
     private UserSearchResponse mapToSearchResponse(UserProfile profile, double completion) {
@@ -348,14 +423,9 @@ public class UserProfilesService {
                 .toList();
     }
 
-    private UserProfile getOrCreateProfile(UUID userId) {
-
+    private UserProfile getProfile(UUID userId) {
         return repository.findById(userId)
-                .orElseGet(() -> {
-                    UserProfile profile = new UserProfile();
-                    profile.setId(userId);
-                    return repository.save(profile);
-                });
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
     }
 
 }

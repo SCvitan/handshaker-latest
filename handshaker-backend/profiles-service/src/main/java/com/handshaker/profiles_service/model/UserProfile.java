@@ -32,7 +32,10 @@ public class UserProfile {
     @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private Accommodation accommodation;
 
-    public UserProfile(UUID id, String email, PersonalInfo personalInfo, LegalStatus legalStatus, JobPreferences jobPreferences, List<LanguageSkill> languageSkills, Accommodation accommodation) {
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private EmploymentCurrent employmentCurrent;
+
+    public UserProfile(UUID id, String email, PersonalInfo personalInfo, LegalStatus legalStatus, JobPreferences jobPreferences, List<LanguageSkill> languageSkills, Accommodation accommodation, EmploymentCurrent employmentCurrent) {
         this.id = id;
         this.email = email;
         this.personalInfo = personalInfo;
@@ -40,6 +43,7 @@ public class UserProfile {
         this.jobPreferences = jobPreferences;
         this.languageSkills = languageSkills;
         this.accommodation = accommodation;
+        this.employmentCurrent = employmentCurrent;
     }
 
     public UUID getId() {
@@ -96,5 +100,13 @@ public class UserProfile {
 
     public void setAccommodation(Accommodation accommodation) {
         this.accommodation = accommodation;
+    }
+
+    public EmploymentCurrent getEmploymentCurrent() {
+        return employmentCurrent;
+    }
+
+    public void setEmploymentCurrent(EmploymentCurrent employmentCurrent) {
+        this.employmentCurrent = employmentCurrent;
     }
 }

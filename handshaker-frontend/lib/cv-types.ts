@@ -51,12 +51,36 @@ export interface Accommodation {
   peopleInRoom: string
 }
 
+export interface EmploymentCurrent {
+  industry: string
+  jobTitleInCroatia: string
+  employerName: string
+  employerAddress: string
+  employerContactInfo: string
+  cityOfWork: string
+  numberOfPreviousEmployersInCroatia: number | ""
+  workAddress: {
+    postalCode: string
+    city: string
+    street: string
+    houseNumber: string
+  }
+}
+
 export interface CVData {
   personalInfo: PersonalInfo
   legalStatus: LegalStatus
   jobPreferences: JobPreferences
   languages: Language[]
   accommodation: Accommodation
+  employmentCurrent: EmploymentCurrent
+}
+
+
+export interface UserProfile extends CVData {
+  id: string
+  email: string
+  profileCompletion: number
 }
 
 export const INITIAL_CV_DATA: CVData = {
@@ -104,20 +128,48 @@ export const INITIAL_CV_DATA: CVData = {
     peopleInAccommodation: "",
     peopleInRoom: "",
   },
+  employmentCurrent: {
+    industry: "",
+    jobTitleInCroatia: "",
+    employerName: "",
+    employerAddress: "",
+    employerContactInfo: "",
+    cityOfWork: "",
+    numberOfPreviousEmployersInCroatia: "",
+    workAddress: {
+      postalCode: "",
+      city: "",
+      street: "",
+      houseNumber: "",
+    },
+  },
 }
 
 export const GENDER_OPTIONS = ["MALE", "FEMALE", "OTHER"]
 export const MARITAL_STATUS_OPTIONS = ["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"]
 export const EXPERIENCE_LEVEL_OPTIONS = [
   "BEGINNER",
-  "EXPERIENCED_NOT_INDEPENDENT",
+  "EXPERIENCED_WITH_SUPERVISION",
   "EXPERIENCED_INDEPENDENT",
-  "EXPERIENCED_CAN_TEACH",
+  "EXPERT",
 ]
 export const LANGUAGE_OPTIONS = [
   "CROATIAN",
   "ENGLISH",
+  "GERMAN",
+  "FRENCH",
+  "SPANISH",
+  "ITALIAN",
+  "PORTUGUESE",
+  "RUSSIAN",
+  "ARABIC",
+  "CHINESE",
+  "HINDI",
+  "TURKISH",
+  "SERBIAN",
+  "BOSNIAN",
+  "SLOVENIAN",
 ]
-export const ACCOMMODATION_PROVIDER_OPTIONS = ["EMPLOYER", "SELF"]
+export const ACCOMMODATION_PROVIDER_OPTIONS = ["EMPLOYER", "SELF", "AGENCY", "OTHER"]
 export const ACCOMMODATION_TYPE_OPTIONS = ["ALONE", "WITH_FAMILY", "WITH_WORKERS", "SHARED"]
 export const PEOPLE_COUNT_OPTIONS = ["ONE", "TWO", "THREE", "FOUR", "FIVE_OR_MORE"]

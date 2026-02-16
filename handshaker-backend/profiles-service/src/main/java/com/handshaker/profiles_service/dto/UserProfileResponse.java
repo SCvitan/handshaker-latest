@@ -1,6 +1,5 @@
 package com.handshaker.profiles_service.dto;
 
-import com.handshaker.profiles_service.model.Accommodation;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,5 +12,6 @@ public record UserProfileResponse(
         JobPreferencesResponse jobPreferences,
         List<LanguageSkillResponse> languages,
         AccommodationResponse accommodation,
+        EmploymentCurrentResponse employmentCurrentResponse,
         double profileCompletion
 ) {}
