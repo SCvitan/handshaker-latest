@@ -1,5 +1,5 @@
-// const API_BASE = "http://142.132.181.45:8080"
-const API_BASE = "http://localhost:8080"
+const API_BASE = "http://142.132.181.45:8080"
+//const API_BASE = "http://localhost:8080"
 
 export type UserRole = "USER" | "COMPANY"
 
