@@ -1,9 +1,6 @@
 package com.handshaker.company_service.config;
 
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,19 +8,18 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
-    public static final String USER_REGISTERED_QUEUE = "user.registered";
-    public static final String NOTIFICATIONS_EXCHANGE = "notifications.exchange";
-    public static final String USER_NOTIFICATION_ROUTING_KEY = "notifications.user";
+    public static final String COMPANY_REGISTERED_QUEUE = "company.user.registered";
 
     @Bean
-    public TopicExchange notificationsExchange() {
-        return new TopicExchange(NOTIFICATIONS_EXCHANGE);
+    public TopicExchange userExchange() {
+        return new TopicExchange("user.events");
     }
 
-
     @Bean
-    public Queue userRegisteredQueue() {
-        return new Queue(USER_REGISTERED_QUEUE, true);
+    public Queue companyRegisteredQueue() {
+        return QueueBuilder
+                .durable(COMPANY_REGISTERED_QUEUE)
+                .build();
     }
 
     @Bean
@@ -32,12 +28,11 @@ public class RabbitConfig {
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate(
-            ConnectionFactory connectionFactory,
-            JacksonJsonMessageConverter messageConverter
-    ) {
-        RabbitTemplate template = new RabbitTemplate(connectionFactory);
-        template.setMessageConverter(messageConverter);
-        return template;
+    public Binding binding(Queue companyRegisteredQueue,
+                           TopicExchange userExchange) {
+        return BindingBuilder
+                .bind(companyRegisteredQueue)
+                .to(userExchange)
+                .with("user.registered");
     }
 }

@@ -3,14 +3,11 @@ package com.handshaker.auth_service.controller;
 import com.handshaker.auth_service.dto.AuthResponse;
 import com.handshaker.auth_service.dto.LoginRequest;
 import com.handshaker.auth_service.dto.RegisterRequest;
-import com.handshaker.auth_service.model.User;
 import com.handshaker.auth_service.service.AuthService;
-import com.handshaker.auth_service.security.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")

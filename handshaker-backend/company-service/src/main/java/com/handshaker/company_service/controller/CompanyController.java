@@ -1,7 +1,5 @@
 package com.handshaker.company_service.controller;
 
-import com.handshaker.company_service.dto.NotificationRequest;
-import com.handshaker.company_service.events.UserNotificationEvent;
 import com.handshaker.company_service.model.Company;
 import com.handshaker.company_service.repository.CompanyRepository;
 import com.handshaker.company_service.service.CompanyService;
@@ -43,25 +41,6 @@ public class CompanyController {
                     return ResponseEntity.ok(company);
                 })
                 .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping("/notify/{userId}")
-    public ResponseEntity<?> notifyUser(
-            @PathVariable UUID userId,
-            @RequestBody NotificationRequest request,
-            Authentication authentication
-    ) {
-        UUID companyId = UUID.fromString(authentication.getPrincipal().toString());
-
-        service.notifyUser(
-                new UserNotificationEvent(
-                        companyId,
-                        userId,
-                        request.getMessage()
-                )
-        );
-
-        return ResponseEntity.ok().build();
     }
 
 }

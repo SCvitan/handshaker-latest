@@ -1,6 +1,7 @@
 package com.handshaker.profiles_service.service;
 
 import com.handshaker.events.UserRegisteredEvent;
+import com.handshaker.profiles_service.enums.Role;
 import com.handshaker.profiles_service.model.*;
 import com.handshaker.profiles_service.config.RabbitConfig;
 import com.handshaker.profiles_service.dto.*;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.AbstractMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -31,15 +33,16 @@ public class UserProfilesService {
     @RabbitListener(queues = RabbitConfig.USER_REGISTERED_QUEUE)
     public void handleUserRegistered(UserRegisteredEvent event){
         log.info("Received UserRegisteredEvent for {} with email {}", event.getUserId(), event.getEmail());
-    //    if (repository.existsById(event.getUserId())){
-    //        return;
-    //    }
+        if (!Objects.equals(event.getRole(), Role.USER.toString())) {
+            return;
+        }
 
         UserProfile profile = new UserProfile();
         profile.setId(event.getUserId());
         profile.setEmail(event.getEmail());
 
         repository.save(profile);
+        log.info("User service registred user:  {}", profile.getEmail());
     }
 
     @Transactional

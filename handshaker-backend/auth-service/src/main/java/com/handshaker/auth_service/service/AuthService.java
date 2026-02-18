@@ -1,6 +1,5 @@
 package com.handshaker.auth_service.service;
 
-import com.handshaker.auth_service.config.RabbitConfig;
 import com.handshaker.auth_service.dto.AuthResponse;
 import com.handshaker.auth_service.dto.LoginRequest;
 import com.handshaker.auth_service.dto.RegisterRequest;
@@ -50,8 +49,6 @@ public class AuthService {
                 passwordEncoder.encode(request.password()),
                 request.role()
         );
-
-
 
         userRepository.saveAndFlush(user);
         log.info("Saved user {}", user.getEmail());
