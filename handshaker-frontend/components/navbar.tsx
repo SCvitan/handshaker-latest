@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { FileText, LogOut, User, ChevronDown, Building2 } from "lucide-react"
+import { FileText, LogOut, User, ChevronDown, Building2, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function Navbar() {
@@ -55,12 +55,20 @@ export function Navbar() {
             </>
           )}
           {user && user.role === "COMPANY" && (
-            <Link
-              href="/company-profile"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Company Profile
-            </Link>
+            <>
+              <Link
+                href="/company-profile"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Company Profile
+              </Link>
+              <Link
+                href="/search-profiles"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Search Profiles
+              </Link>
+            </>
           )}
         </nav>
 
@@ -113,13 +121,22 @@ export function Navbar() {
                   </>
                 )}
                 {user.role === "COMPANY" && (
-                  <DropdownMenuItem
-                    onClick={() => router.push("/company-profile")}
-                    className="cursor-pointer"
-                  >
-                    <Building2 className="mr-2 size-4" />
-                    Company Profile
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/company-profile")}
+                      className="cursor-pointer"
+                    >
+                      <Building2 className="mr-2 size-4" />
+                      Company Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/search-profiles")}
+                      className="cursor-pointer"
+                    >
+                      <Search className="mr-2 size-4" />
+                      Search Profiles
+                    </DropdownMenuItem>
+                  </>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

@@ -1,7 +1,5 @@
-package com.handshaker.company_service.config;
+package com.handshaker.company_service.security;
 
-import com.handshaker.company_service.security.JwtAuthenticationFilter;
-import com.handshaker.company_service.security.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

@@ -84,3 +84,35 @@ export async function saveEmploymentCurrent(data: EmploymentCurrent) {
     body: JSON.stringify(data),
   })
 }
+
+// ── Company endpoints (port 8082) ──
+
+const COMPANY_API_BASE = "http://localhost:8082"
+//const COMPANY_API_BASE = "http://142.132.181.45:8082"
+
+export interface CompanyProfile {
+  id: string
+  email: string
+  companyName: string
+  description: string
+  industry: string
+  phoneNumber: string
+  website: string
+  address: string
+  city: string
+  country: string
+}
+
+export type CompanyProfileUpdate = Omit<CompanyProfile, "id" | "email">
+
+export async function fetchCompanyProfile(): Promise<CompanyProfile> {
+  const res = await authFetch(`${COMPANY_API_BASE}/companies/me`)
+  return res.json()
+}
+
+export async function saveCompanyProfile(data: CompanyProfileUpdate) {
+  return authFetch(`${COMPANY_API_BASE}/companies/me`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  })
+}

@@ -1,7 +1,6 @@
 "use client"
 
 import React from "react"
-
 import { useAuth } from "@/components/auth-provider"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -22,7 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Building2, Globe, Mail, MapPin, Phone, Users } from "lucide-react"
+import { Building2, Globe, MapPin, Phone, Loader2 } from "lucide-react"
+import {
+  fetchCompanyProfile,
+  saveCompanyProfile,
+  type CompanyProfileUpdate,
+} from "@/lib/cv-api"
 
 export default function CompanyProfilePage() {
   const { user, isLoading } = useAuth()
@@ -37,9 +41,13 @@ export default function CompanyProfilePage() {
   const [city, setCity] = useState("")
   const [country, setCountry] = useState("")
   const [description, setDescription] = useState("")
-  const [contactEmail, setContactEmail] = useState("")
-  const [saved, setSaved] = useState(false)
 
+  const [isFetching, setIsFetching] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState("")
+
+  // Redirect non-company users
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/auth?mode=login")
@@ -49,18 +57,65 @@ export default function CompanyProfilePage() {
     }
   }, [user, isLoading, router])
 
-  if (isLoading || !user || user.role !== "COMPANY") {
+  // Fetch current company data on load
+  useEffect(() => {
+    if (!isLoading && user && user.role === "COMPANY") {
+      fetchCompanyProfile()
+        .then((profile) => {
+          setCompanyName(profile.companyName || "")
+          setIndustry(profile.industry || "")
+          setWebsite(profile.website || "")
+          setPhone(profile.phoneNumber || "")
+          setAddress(profile.address || "")
+          setCity(profile.city || "")
+          setCountry(profile.country || "")
+          setDescription(profile.description || "")
+        })
+        .catch((err) => {
+          console.error("Failed to fetch company profile:", err)
+          setError("Failed to load company profile.")
+        })
+        .finally(() => setIsFetching(false))
+    }
+  }, [isLoading, user])
+
+  if (isLoading || !user || user.role !== "COMPANY" || isFetching) {
     return (
       <div className="flex min-h-[80vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <Loader2 className="size-6 animate-spin" />
+          <span>Loading company profile...</span>
+        </div>
       </div>
     )
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    setIsSaving(true)
+    setError("")
+    setSaved(false)
+
+    const payload: CompanyProfileUpdate = {
+      companyName,
+      description,
+      industry,
+      phoneNumber: phone,
+      website,
+      address,
+      city,
+      country,
+    }
+
+    try {
+      await saveCompanyProfile(payload)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save profile.")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -71,12 +126,20 @@ export default function CompanyProfilePage() {
             <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Building2 className="size-5" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Company Profile</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              Company Profile
+            </h1>
           </div>
           <p className="text-muted-foreground">
-            Manage your company information. This will be visible to job seekers.
+            Manage your company information.
           </p>
         </div>
+
+        {error && (
+          <div className="mb-6 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSave} className="flex flex-col gap-6">
           <Card>
@@ -104,16 +167,19 @@ export default function CompanyProfilePage() {
                       <SelectValue placeholder="Select industry" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="technology">Technology</SelectItem>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="finance">Finance</SelectItem>
-                      <SelectItem value="education">Education</SelectItem>
-                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                      <SelectItem value="retail">Retail</SelectItem>
-                      <SelectItem value="transportation">Transportation</SelectItem>
-                      <SelectItem value="construction">Construction</SelectItem>
-                      <SelectItem value="hospitality">Hospitality</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="HEALTHCARE">Healthcare</SelectItem>
+                      <SelectItem value="MANUFACTURING">
+                        Manufacturing
+                      </SelectItem>
+                      <SelectItem value="TRANSPORTATION">
+                        Transportation
+                      </SelectItem>
+                      <SelectItem value="CONSTRUCTION">
+                        Construction
+                      </SelectItem>
+                      <SelectItem value="HOSPITALITY">Hospitality</SelectItem>
+                      <SelectItem value="OTHER">Other</SelectItem>
+                      <SelectItem value="CLEANING">Cleaning</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -124,12 +190,16 @@ export default function CompanyProfilePage() {
                       <SelectValue placeholder="Select size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1-10">1-10 employees</SelectItem>
-                      <SelectItem value="11-50">11-50 employees</SelectItem>
-                      <SelectItem value="51-200">51-200 employees</SelectItem>
-                      <SelectItem value="201-500">201-500 employees</SelectItem>
-                      <SelectItem value="501-1000">501-1000 employees</SelectItem>
-                      <SelectItem value="1000+">1000+ employees</SelectItem>
+                      <SelectItem value="ONE_TEN">1-10 employees</SelectItem>
+                      <SelectItem value="ELEVEN_FIFTY">11-50 employees</SelectItem>
+                      <SelectItem value="FIFTYONE_TWOHUNDRED">51-200 employees</SelectItem>
+                      <SelectItem value="TWOHUNDREDONE_FIVEHUNDRED">
+                        201-500 employees
+                      </SelectItem>
+                      <SelectItem value="FIVEHUNDREDONE_THOUSAND">
+                        501-1000 employees
+                      </SelectItem>
+                      <SelectItem value="THOUSAND_PLUS">1000+ employees</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -158,34 +228,27 @@ export default function CompanyProfilePage() {
             <CardContent className="flex flex-col gap-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="contactEmail" className="flex items-center gap-1.5">
-                    <Mail className="size-3.5 text-muted-foreground" />
-                    Contact Email
-                  </Label>
-                  <Input
-                    id="contactEmail"
-                    type="email"
-                    placeholder="hr@acme.com"
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="phone" className="flex items-center gap-1.5">
+                  <Label
+                    htmlFor="phone"
+                    className="flex items-center gap-1.5"
+                  >
                     <Phone className="size-3.5 text-muted-foreground" />
                     Phone Number
                   </Label>
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="+1 (555) 000-0000"
+                    placeholder="+385 91 000 0000"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="website" className="flex items-center gap-1.5">
+                <Label
+                  htmlFor="website"
+                  className="flex items-center gap-1.5"
+                >
                   <Globe className="size-3.5 text-muted-foreground" />
                   Website
                 </Label>
@@ -203,13 +266,14 @@ export default function CompanyProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Location</CardTitle>
-              <CardDescription>
-                Where your company is based
-              </CardDescription>
+              <CardDescription>Where your company is based</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="address" className="flex items-center gap-1.5">
+                <Label
+                  htmlFor="address"
+                  className="flex items-center gap-1.5"
+                >
                   <MapPin className="size-3.5 text-muted-foreground" />
                   Address
                 </Label>
@@ -225,7 +289,7 @@ export default function CompanyProfilePage() {
                   <Label htmlFor="city">City</Label>
                   <Input
                     id="city"
-                    placeholder="San Francisco"
+                    placeholder="Zagreb"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                   />
@@ -234,7 +298,7 @@ export default function CompanyProfilePage() {
                   <Label htmlFor="country">Country</Label>
                   <Input
                     id="country"
-                    placeholder="United States"
+                    placeholder="Croatia"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
                   />
@@ -245,10 +309,19 @@ export default function CompanyProfilePage() {
 
           <div className="flex items-center justify-end gap-3">
             {saved && (
-              <p className="text-sm text-green-600">Profile saved successfully!</p>
+              <p className="text-sm text-green-600">
+                Profile saved successfully!
+              </p>
             )}
-            <Button type="submit" size="lg">
-              Save Profile
+            <Button type="submit" size="lg" disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Profile"
+              )}
             </Button>
           </div>
         </form>
