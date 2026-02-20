@@ -10,12 +10,15 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.AbstractMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UserProfilesService {
@@ -247,24 +250,127 @@ public class UserProfilesService {
         }
     }
 
-    @Transactional
-    public List<UserSearchResponse> search(UserSearchRequest request) {
+    public Page<UserProfileResponse> search(UserProfileSearchRequest request,
+                                            Pageable pageable) {
 
-        List<UserProfile> users =
-                repository.findAll(UserProfileSpecifications.withFilters(request, completenessCalculator));
+        // Build Specification dynamically
+        var spec = UserProfileSpecifications.build(request);
 
-        return users.stream()
-                .map(profile -> {
-                    double completion = completenessCalculator.calculate(profile);
-                    return new AbstractMap.SimpleEntry<>(profile, completion);
-                })
-                .filter(entry ->
-                        request.minProfileCompletion() == null ||
-                                entry.getValue() >= request.minProfileCompletion()
+        // Execute query with pagination
+        Page<UserProfile> profiles = repository.findAll(spec, pageable);
+
+        // Map entities to DTOs
+        return profiles.map(profile -> new UserProfileResponse(
+                profile.getId(),
+                profile.getEmail(),
+
+                // PersonalInfo
+                profile.getPersonalInfo() != null ?
+                        new PersonalInfoResponse(
+                                profile.getPersonalInfo().getFirstName(),
+                                profile.getPersonalInfo().getLastName(),
+                                profile.getPersonalInfo().getDateOfBirth(),
+                                profile.getPersonalInfo().getGender(),
+                                profile.getPersonalInfo().getStateOfOrigin(),
+                                profile.getPersonalInfo().getMobilePhone(),
+                                profile.getPersonalInfo().getMaritalStatus(),
+                                profile.getPersonalInfo().getNumberOfChildren()
+                        ) : null,
+
+                // LegalStatus
+                profile.getLegalStatus() != null ?
+                        new LegalStatusResponse(
+                                profile.getLegalStatus().isHasCroatianWorkPermit(),
+                                profile.getLegalStatus().getWorkPermitExpirationDate(),
+                                profile.getLegalStatus().isCurrentlyEmployedInCroatia(),
+                                profile.getLegalStatus().getDateOfArrivalInCroatia(),
+                                profile.getLegalStatus().getPassportExpirationDate(),
+                                profile.getLegalStatus().getOib()
+                        ) : null,
+
+                // JobPreferences
+                profile.getJobPreferences() != null ?
+                        new JobPreferencesResponse(
+                                profile.getJobPreferences().getDesiredIndustry(),
+                                profile.getJobPreferences().getDesiredPosition(),
+                                profile.getJobPreferences().getExpectedMonthlyIncome(),
+                                profile.getJobPreferences().isAccommodationRequired(),
+                                profile.getJobPreferences().isTransportationRequired(),
+                                profile.getJobPreferences().getDesiredWorkingHoursPerDay(),
+                                profile.getJobPreferences().getDesiredWorkingDaysPerMonth(),
+                                profile.getJobPreferences().getYearsOfExperience(),
+                                profile.getJobPreferences().getExperienceLevel()
+                        ) : null,
+
+                // Languages
+                profile.getLanguageSkills() != null ?
+                        profile.getLanguageSkills().stream()
+                                .map(ls -> new LanguageSkillResponse(
+                                        ls.getLanguage(),
+                                        ls.getWritten(),
+                                        ls.getSpoken(),
+                                        ls.getReading(),
+                                        ls.getUnderstanding()
+                                ))
+                                .toList() : List.of(),
+
+                // Accommodation
+                profile.getAccommodation() != null
+                        ? mapAccommodation(profile.getAccommodation())
+                        : null,
+
+                // EmploymentCurrent
+                profile.getEmploymentCurrent() != null
+                        ? new EmploymentCurrentResponse(
+                        profile.getEmploymentCurrent().getIndustry(),
+                        profile.getEmploymentCurrent().getJobTitleInCroatia(),
+                        profile.getEmploymentCurrent().getEmployerName(),
+                        profile.getEmploymentCurrent().getEmployerAddress(),
+                        profile.getEmploymentCurrent().getEmployerContactInfo(),
+                        profile.getEmploymentCurrent().getCityOfWork(),
+                        profile.getEmploymentCurrent().getNumberOfPreviousEmployersInCroatia(),
+                        mapAddress(profile.getEmploymentCurrent().getWorkAddress())
                 )
-                .map(entry -> mapToSearchResponse(entry.getKey(), entry.getValue()))
-                .toList();
+                        : null,
+
+                // Profile completion (example: you may implement your own calculation)
+                calculateProfileCompletion(profile)
+        ));
     }
+
+    private AddressResponse mapAddress(Address address) {
+        if (address == null) {
+            return null;
+        }
+
+        return new AddressResponse(
+                address.getPostalCode(),
+                address.getCity(),
+                address.getStreet(),
+                address.getHouseNumber()
+        );
+    }
+
+
+    /**
+     * Example method to calculate profile completion as a double between 0.0 and 1.0
+     */
+    private double calculateProfileCompletion(UserProfile profile) {
+        int filled = 0;
+        int total = 8; // number of sections we check
+
+        if (profile.getPersonalInfo() != null) filled++;
+        if (profile.getLegalStatus() != null) filled++;
+        if (profile.getJobPreferences() != null) filled++;
+        if (profile.getLanguageSkills() != null && !profile.getLanguageSkills().isEmpty()) filled++;
+        if (profile.getAccommodation() != null) filled++;
+        if (profile.getEmploymentCurrent() != null) filled++;
+        if (profile.getEmail() != null && !profile.getEmail().isBlank()) filled++;
+        if (profile.getId() != null) filled++;
+
+        return (double) filled / total;
+    }
+
 
     private EmploymentCurrentResponse mapEmploymentCurrent(EmploymentCurrent employmentCurrent) {
 
@@ -292,26 +398,6 @@ public class UserProfilesService {
                 employmentCurrent.getCityOfWork(),
                 employmentCurrent.getNumberOfPreviousEmployersInCroatia(),
                 addressResponse
-        );
-    }
-
-    private UserSearchResponse mapToSearchResponse(UserProfile profile, double completion) {
-
-        PersonalInfo pi = profile.getPersonalInfo(); // safe null handling
-        JobPreferences prefs = profile.getJobPreferences();
-
-        String firstName = pi != null ? pi.getFirstName() : null;
-        String lastName = pi != null ? pi.getLastName() : null;
-
-        return new UserSearchResponse(
-                profile.getId(),
-                firstName,
-                lastName,
-                prefs != null ? prefs.getDesiredIndustry() : null,
-                prefs != null ? prefs.getDesiredPosition() : null,
-                prefs != null ? prefs.getExperienceLevel() : null,
-                prefs != null ? prefs.getExpectedMonthlyIncome() : null,
-                completion
         );
     }
 

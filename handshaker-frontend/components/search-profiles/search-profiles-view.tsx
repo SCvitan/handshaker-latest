@@ -1,20 +1,20 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Search, SlidersHorizontal, X, Users, MapPin, Briefcase, Clock, Languages, Shield } from "lucide-react"
+import { Search, SlidersHorizontal, X, Users, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import { FilterSidebar } from "./filter-sidebar"
 import { ProfileCard } from "./profile-card"
 import { ProfileDetailSheet } from "./profile-detail-sheet"
 import type { UserProfile } from "@/lib/cv-types"
 import {
-  GENDER_OPTIONS,
-  EXPERIENCE_LEVEL_OPTIONS,
-  LANGUAGE_OPTIONS,
-} from "@/lib/cv-types"
+  searchProfiles,
+  type ProfileSearchRequest,
+  type ProfileSearchResponse,
+} from "@/lib/cv-api"
 
 export interface SearchFilters {
   searchQuery: string
@@ -70,401 +70,35 @@ export const INITIAL_FILTERS: SearchFilters = {
   minProfileCompletion: 0,
 }
 
-// Mock data for demonstration (no backend call yet)
-const MOCK_PROFILES: UserProfile[] = [
-  {
-    id: "1417a625-f2e7-4f66-a5f3-9c3077fb083f",
-    email: "sime.cvitan@email.com",
-    profileCompletion: 1.0,
-    personalInfo: {
-      firstName: "Sime",
-      lastName: "Cvitan",
-      dateOfBirth: "1993-01-02",
-      gender: "MALE",
-      stateOfOrigin: "Croatia",
-      mobilePhoneNumber: "0914508995",
-      maritalStatus: "MARRIED",
-      numberOfChildren: 3,
-    },
-    legalStatus: {
-      hasCroatianWorkPermit: true,
-      workPermitExpirationDate: "2028-01-01",
-      currentlyEmployedInCroatia: true,
-      dateOfArrivalInCroatia: "2023-03-05",
-      passportExpirationDate: "2030-01-01",
-      oib: "12345678901",
-    },
-    jobPreferences: {
-      desiredIndustry: "Transportation",
-      desiredPosition: "Driver",
-      expectedMonthlyIncome: 2000,
-      accommodationRequired: true,
-      transportationRequired: false,
-      desiredWorkingHoursPerDay: 8,
-      desiredWorkingDaysPerMonth: 20,
-      yearsOfExperience: 5,
-      experienceLevel: "EXPERIENCED_INDEPENDENT",
-    },
-    languages: [
-      { language: "CROATIAN", written: 6, spoken: 7, reading: 8, understanding: 7 },
-      { language: "ENGLISH", written: 5, spoken: 6, reading: 7, understanding: 6 },
-    ],
-    accommodation: {
-      address: { postalCode: "10000", city: "Zagreb", street: "Ilica", houseNumber: "15A" },
-      provider: "EMPLOYER",
-      type: "WITH_WORKERS",
-      peopleInAccommodation: "THREE",
-      peopleInRoom: "TWO",
-    },
-    employmentCurrent: {
-      industry: "Transportation",
-      jobTitleInCroatia: "Driver",
-      employerName: "FirmaZ",
-      employerAddress: "ulica 3",
-      employerContactInfo: "nekaadresa@email.com",
-      cityOfWork: "Daruvar",
-      numberOfPreviousEmployersInCroatia: 2,
-      workAddress: { postalCode: "10000", city: "Zagreb", street: "Ilica", houseNumber: "15A" },
-    },
-  },
-  {
-    id: "a2b3c4d5-e6f7-8901-2345-6789abcdef01",
-    email: "ana.horvat@email.com",
-    profileCompletion: 0.85,
-    personalInfo: {
-      firstName: "Ana",
-      lastName: "Horvat",
-      dateOfBirth: "1988-07-15",
-      gender: "FEMALE",
-      stateOfOrigin: "Bosnia",
-      mobilePhoneNumber: "0921234567",
-      maritalStatus: "SINGLE",
-      numberOfChildren: 0,
-    },
-    legalStatus: {
-      hasCroatianWorkPermit: true,
-      workPermitExpirationDate: "2027-06-01",
-      currentlyEmployedInCroatia: false,
-      dateOfArrivalInCroatia: "2022-09-10",
-      passportExpirationDate: "2029-03-15",
-      oib: "98765432101",
-    },
-    jobPreferences: {
-      desiredIndustry: "Healthcare",
-      desiredPosition: "Nurse",
-      expectedMonthlyIncome: 1800,
-      accommodationRequired: false,
-      transportationRequired: true,
-      desiredWorkingHoursPerDay: 8,
-      desiredWorkingDaysPerMonth: 22,
-      yearsOfExperience: 10,
-      experienceLevel: "EXPERT",
-    },
-    languages: [
-      { language: "CROATIAN", written: 8, spoken: 9, reading: 9, understanding: 9 },
-      { language: "GERMAN", written: 4, spoken: 5, reading: 6, understanding: 5 },
-      { language: "ENGLISH", written: 7, spoken: 7, reading: 8, understanding: 8 },
-    ],
-    accommodation: {
-      address: { postalCode: "21000", city: "Split", street: "Vukovarska", houseNumber: "8" },
-      provider: "SELF",
-      type: "ALONE",
-      peopleInAccommodation: "ONE",
-      peopleInRoom: "ONE",
-    },
-    employmentCurrent: {
-      industry: "Healthcare",
-      jobTitleInCroatia: "Nurse",
-      employerName: "KBC Split",
-      employerAddress: "Spinciceva 1",
-      employerContactInfo: "info@kbc-split.hr",
-      cityOfWork: "Split",
-      numberOfPreviousEmployersInCroatia: 1,
-      workAddress: { postalCode: "21000", city: "Split", street: "Spinciceva", houseNumber: "1" },
-    },
-  },
-  {
-    id: "b3c4d5e6-f7a8-9012-3456-789abcdef012",
-    email: "marko.petrovic@email.com",
-    profileCompletion: 0.6,
-    personalInfo: {
-      firstName: "Marko",
-      lastName: "Petrovic",
-      dateOfBirth: "1995-11-20",
-      gender: "MALE",
-      stateOfOrigin: "Serbia",
-      mobilePhoneNumber: "0987654321",
-      maritalStatus: "SINGLE",
-      numberOfChildren: 0,
-    },
-    legalStatus: {
-      hasCroatianWorkPermit: false,
-      workPermitExpirationDate: "",
-      currentlyEmployedInCroatia: false,
-      dateOfArrivalInCroatia: "2024-01-15",
-      passportExpirationDate: "2028-08-20",
-      oib: "",
-    },
-    jobPreferences: {
-      desiredIndustry: "Construction",
-      desiredPosition: "Builder",
-      expectedMonthlyIncome: 1500,
-      accommodationRequired: true,
-      transportationRequired: true,
-      desiredWorkingHoursPerDay: 10,
-      desiredWorkingDaysPerMonth: 24,
-      yearsOfExperience: 3,
-      experienceLevel: "EXPERIENCED_WITH_SUPERVISION",
-    },
-    languages: [
-      { language: "SERBIAN", written: 9, spoken: 10, reading: 9, understanding: 10 },
-      { language: "CROATIAN", written: 3, spoken: 4, reading: 4, understanding: 5 },
-    ],
-    accommodation: {
-      address: { postalCode: "31000", city: "Osijek", street: "Europska", houseNumber: "22B" },
-      provider: "EMPLOYER",
-      type: "WITH_WORKERS",
-      peopleInAccommodation: "FIVE_OR_MORE",
-      peopleInRoom: "THREE",
-    },
-    employmentCurrent: {
-      industry: "",
-      jobTitleInCroatia: "",
-      employerName: "",
-      employerAddress: "",
-      employerContactInfo: "",
-      cityOfWork: "",
-      numberOfPreviousEmployersInCroatia: "",
-      workAddress: { postalCode: "", city: "", street: "", houseNumber: "" },
-    },
-  },
-  {
-    id: "c4d5e6f7-a8b9-0123-4567-89abcdef0123",
-    email: "ivana.matic@email.com",
-    profileCompletion: 0.92,
-    personalInfo: {
-      firstName: "Ivana",
-      lastName: "Matic",
-      dateOfBirth: "1990-04-10",
-      gender: "FEMALE",
-      stateOfOrigin: "Croatia",
-      mobilePhoneNumber: "0911112233",
-      maritalStatus: "MARRIED",
-      numberOfChildren: 1,
-    },
-    legalStatus: {
-      hasCroatianWorkPermit: true,
-      workPermitExpirationDate: "2029-12-01",
-      currentlyEmployedInCroatia: true,
-      dateOfArrivalInCroatia: "2020-01-01",
-      passportExpirationDate: "2031-06-01",
-      oib: "11223344556",
-    },
-    jobPreferences: {
-      desiredIndustry: "Cleaning",
-      desiredPosition: "Cleaner",
-      expectedMonthlyIncome: 3500,
-      accommodationRequired: false,
-      transportationRequired: false,
-      desiredWorkingHoursPerDay: 8,
-      desiredWorkingDaysPerMonth: 20,
-      yearsOfExperience: 8,
-      experienceLevel: "EXPERT",
-    },
-    languages: [
-      { language: "CROATIAN", written: 10, spoken: 10, reading: 10, understanding: 10 },
-      { language: "ENGLISH", written: 9, spoken: 9, reading: 10, understanding: 10 },
-      { language: "GERMAN", written: 6, spoken: 7, reading: 7, understanding: 8 },
-    ],
-    accommodation: {
-      address: { postalCode: "10000", city: "Zagreb", street: "Savska", houseNumber: "45" },
-      provider: "SELF",
-      type: "WITH_FAMILY",
-      peopleInAccommodation: "THREE",
-      peopleInRoom: "TWO",
-    },
-    employmentCurrent: {
-      industry: "IT",
-      jobTitleInCroatia: "Software Developer",
-      employerName: "TechCo d.o.o.",
-      employerAddress: "Heinzelova 55",
-      employerContactInfo: "hr@techco.hr",
-      cityOfWork: "Zagreb",
-      numberOfPreviousEmployersInCroatia: 3,
-      workAddress: { postalCode: "10000", city: "Zagreb", street: "Heinzelova", houseNumber: "55" },
-    },
-  },
-  {
-    id: "d5e6f7a8-b9c0-1234-5678-9abcdef01234",
-    email: "ahmed.selim@email.com",
-    profileCompletion: 0.45,
-    personalInfo: {
-      firstName: "Ahmed",
-      lastName: "Selim",
-      dateOfBirth: "1998-02-28",
-      gender: "MALE",
-      stateOfOrigin: "Turkey",
-      mobilePhoneNumber: "0995556677",
-      maritalStatus: "SINGLE",
-      numberOfChildren: 0,
-    },
-    legalStatus: {
-      hasCroatianWorkPermit: true,
-      workPermitExpirationDate: "2026-04-01",
-      currentlyEmployedInCroatia: false,
-      dateOfArrivalInCroatia: "2025-06-01",
-      passportExpirationDate: "2033-11-15",
-      oib: "",
-    },
-    jobPreferences: {
-      desiredIndustry: "Hospitality",
-      desiredPosition: "Chef",
-      expectedMonthlyIncome: 1600,
-      accommodationRequired: true,
-      transportationRequired: false,
-      desiredWorkingHoursPerDay: 10,
-      desiredWorkingDaysPerMonth: 25,
-      yearsOfExperience: 2,
-      experienceLevel: "BEGINNER",
-    },
-    languages: [
-      { language: "TURKISH", written: 10, spoken: 10, reading: 10, understanding: 10 },
-      { language: "ENGLISH", written: 4, spoken: 5, reading: 5, understanding: 6 },
-    ],
-    accommodation: {
-      address: { postalCode: "51000", city: "Rijeka", street: "Korzo", houseNumber: "12" },
-      provider: "AGENCY",
-      type: "WITH_WORKERS",
-      peopleInAccommodation: "FOUR",
-      peopleInRoom: "TWO",
-    },
-    employmentCurrent: {
-      industry: "",
-      jobTitleInCroatia: "",
-      employerName: "",
-      employerAddress: "",
-      employerContactInfo: "",
-      cityOfWork: "",
-      numberOfPreviousEmployersInCroatia: "",
-      workAddress: { postalCode: "", city: "", street: "", houseNumber: "" },
-    },
-  },
-]
+function buildRequestBody(filters: SearchFilters): ProfileSearchRequest {
+  const body: ProfileSearchRequest = {}
 
-function calculateAge(dateOfBirth: string): number {
-  const dob = new Date(dateOfBirth)
-  const today = new Date()
-  let age = today.getFullYear() - dob.getFullYear()
-  const m = today.getMonth() - dob.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--
-  return age
-}
+  if (filters.searchQuery) body.search = filters.searchQuery
+  if (filters.gender.length === 1) body.gender = filters.gender[0]
+  if (filters.maritalStatus.length === 1) body.maritalStatus = filters.maritalStatus[0]
+  if (filters.stateOfOrigin) body.stateOfOrigin = filters.stateOfOrigin
+  if (filters.ageMin !== "") body.minAge = filters.ageMin
+  if (filters.ageMax !== "") body.maxAge = filters.ageMax
+  if (filters.hasWorkPermit === "yes") body.hasWorkPermit = true
+  if (filters.hasWorkPermit === "no") body.hasWorkPermit = false
+  if (filters.currentlyEmployed === "yes") body.currentlyEmployed = true
+  if (filters.currentlyEmployed === "no") body.currentlyEmployed = false
+  if (filters.industry) body.industry = filters.industry
+  if (filters.position) body.position = filters.position
+  if (filters.experienceLevel.length === 1) body.experienceLevel = filters.experienceLevel[0]
+  if (filters.yearsOfExperienceMin !== "") body.minExperienceYears = filters.yearsOfExperienceMin
+  if (filters.yearsOfExperienceMax !== "") body.maxExperienceYears = filters.yearsOfExperienceMax
+  if (filters.incomeMin !== "") body.minIncome = filters.incomeMin
+  if (filters.incomeMax !== "") body.maxIncome = filters.incomeMax
+  if (filters.accommodationProvided === "yes") body.accommodationRequired = true
+  if (filters.accommodationProvided === "no") body.accommodationRequired = false
+  if (filters.transportationProvided === "yes") body.transportationRequired = true
+  if (filters.transportationProvided === "no") body.transportationRequired = false
+  if (filters.languages.length === 1) body.language = filters.languages[0]
+  if (filters.minProficiency > 1 && filters.languages.length > 0) body.minProficiency = filters.minProficiency
+  if (filters.city) body.city = filters.city
 
-function applyFilters(profiles: UserProfile[], filters: SearchFilters): UserProfile[] {
-  return profiles.filter((p) => {
-    // Free text search
-    if (filters.searchQuery) {
-      const q = filters.searchQuery.toLowerCase()
-      const searchableText = [
-        p.personalInfo.firstName,
-        p.personalInfo.lastName,
-        p.personalInfo.stateOfOrigin,
-        p.jobPreferences.desiredIndustry,
-        p.jobPreferences.desiredPosition,
-        p.employmentCurrent.cityOfWork,
-        p.accommodation.address.city,
-        p.email,
-      ]
-        .join(" ")
-        .toLowerCase()
-      if (!searchableText.includes(q)) return false
-    }
-
-    // Gender
-    if (filters.gender.length > 0 && !filters.gender.includes(p.personalInfo.gender)) return false
-
-    // Marital status
-    if (filters.maritalStatus.length > 0 && !filters.maritalStatus.includes(p.personalInfo.maritalStatus)) return false
-
-    // State of origin
-    if (filters.stateOfOrigin && p.personalInfo.stateOfOrigin.toLowerCase() !== filters.stateOfOrigin.toLowerCase())
-      return false
-
-    // Age range
-    if (p.personalInfo.dateOfBirth) {
-      const age = calculateAge(p.personalInfo.dateOfBirth)
-      if (filters.ageMin !== "" && age < filters.ageMin) return false
-      if (filters.ageMax !== "" && age > filters.ageMax) return false
-    }
-
-    // Work permit
-    if (filters.hasWorkPermit === "yes" && !p.legalStatus.hasCroatianWorkPermit) return false
-    if (filters.hasWorkPermit === "no" && p.legalStatus.hasCroatianWorkPermit) return false
-
-    // Currently employed
-    if (filters.currentlyEmployed === "yes" && !p.legalStatus.currentlyEmployedInCroatia) return false
-    if (filters.currentlyEmployed === "no" && p.legalStatus.currentlyEmployedInCroatia) return false
-
-    // Industry
-    if (filters.industry && p.jobPreferences.desiredIndustry.toLowerCase() !== filters.industry.toLowerCase()) return false
-
-    // Position
-    if (filters.position && !p.jobPreferences.desiredPosition.toLowerCase().includes(filters.position.toLowerCase()))
-      return false
-
-    // Experience level
-    if (filters.experienceLevel.length > 0 && !filters.experienceLevel.includes(p.jobPreferences.experienceLevel))
-      return false
-
-    // Years of experience
-    const yoe = typeof p.jobPreferences.yearsOfExperience === "number" ? p.jobPreferences.yearsOfExperience : 0
-    if (filters.yearsOfExperienceMin !== "" && yoe < filters.yearsOfExperienceMin) return false
-    if (filters.yearsOfExperienceMax !== "" && yoe > filters.yearsOfExperienceMax) return false
-
-    // Income range
-    const income =
-      typeof p.jobPreferences.expectedMonthlyIncome === "number" ? p.jobPreferences.expectedMonthlyIncome : 0
-    if (filters.incomeMin !== "" && income < filters.incomeMin) return false
-    if (filters.incomeMax !== "" && income > filters.incomeMax) return false
-
-    // Accommodation provided
-    if (filters.accommodationProvided === "yes" && !p.jobPreferences.accommodationRequired) return false
-    if (filters.accommodationProvided === "no" && p.jobPreferences.accommodationRequired) return false
-
-    // Transportation provided
-    if (filters.transportationProvided === "yes" && !p.jobPreferences.transportationRequired) return false
-    if (filters.transportationProvided === "no" && p.jobPreferences.transportationRequired) return false
-
-    // Languages
-    if (filters.languages.length > 0) {
-      const profileLangs = p.languages.map((l) => l.language)
-      const hasAll = filters.languages.every((lang) => profileLangs.includes(lang))
-      if (!hasAll) return false
-
-      // Proficiency check
-      if (filters.minProficiency > 1) {
-        const meetsProf = filters.languages.every((lang) => {
-          const match = p.languages.find((l) => l.language === lang)
-          if (!match) return false
-          const avg = (match.written + match.spoken + match.reading + match.understanding) / 4
-          return avg >= filters.minProficiency
-        })
-        if (!meetsProf) return false
-      }
-    }
-
-    // City
-    if (filters.city) {
-      const profileCity = (p.accommodation.address.city || p.employmentCurrent.cityOfWork || "").toLowerCase()
-      if (!profileCity.includes(filters.city.toLowerCase())) return false
-    }
-
-    // Profile completion
-    if (filters.minProfileCompletion > 0 && (p.profileCompletion || 0) * 100 < filters.minProfileCompletion)
-      return false
-
-    return true
-  })
+  return body
 }
 
 function countActiveFilters(filters: SearchFilters): number {
@@ -488,16 +122,66 @@ function countActiveFilters(filters: SearchFilters): number {
   return count
 }
 
+const PAGE_SIZE = 20
+
 export function SearchProfilesView() {
   const [filters, setFilters] = useState<SearchFilters>(INITIAL_FILTERS)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null)
 
-  const filteredProfiles = useMemo(() => applyFilters(MOCK_PROFILES, filters), [filters])
-  const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters])
+  // API state
+  const [profiles, setProfiles] = useState<UserProfile[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [page, setPage] = useState(0)
+  const [totalElements, setTotalElements] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+  const [hasSearched, setHasSearched] = useState(false)
+
+  const activeFilterCount = countActiveFilters(filters)
+
+  const doSearch = useCallback(async (searchFilters: SearchFilters, pageNum: number) => {
+    setLoading(true)
+    setError("")
+    try {
+      const body = buildRequestBody(searchFilters)
+      const res = await searchProfiles(body, pageNum, PAGE_SIZE)
+      setProfiles(res.content)
+      setTotalElements(res.totalElements)
+      setTotalPages(res.totalPages)
+      setPage(res.number)
+      setHasSearched(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Search failed")
+      setProfiles([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // Fetch on mount with empty filters (show all profiles)
+  useEffect(() => {
+    doSearch(INITIAL_FILTERS, 0)
+  }, [doSearch])
+
+  const handleSearch = () => {
+    setPage(0)
+    doSearch(filters, 0)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    doSearch(filters, newPage)
+  }
 
   const clearFilters = () => {
     setFilters(INITIAL_FILTERS)
+    setPage(0)
+    doSearch(INITIAL_FILTERS, 0)
+  }
+
+  // Search when pressing Enter in the search box
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSearch()
   }
 
   return (
@@ -518,10 +202,15 @@ export function SearchProfilesView() {
             placeholder="Search by name, position, industry, city, email..."
             value={filters.searchQuery}
             onChange={(e) => setFilters((f) => ({ ...f, searchQuery: e.target.value }))}
+            onKeyDown={handleKeyDown}
             className="pl-10"
           />
         </div>
         <div className="flex items-center gap-2">
+          <Button onClick={handleSearch} disabled={loading} className="gap-2">
+            {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+            Search
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -617,6 +306,13 @@ export function SearchProfilesView() {
         </div>
       )}
 
+      {/* Error banner */}
+      {error && (
+        <div className="mb-4 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       {/* Main content */}
       <div className="flex gap-6">
         {/* Sidebar */}
@@ -630,12 +326,28 @@ export function SearchProfilesView() {
         <div className="flex-1">
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{filteredProfiles.length}</span>{" "}
-              {filteredProfiles.length === 1 ? "profile" : "profiles"} found
+              {hasSearched && (
+                <>
+                  <span className="font-medium text-foreground">{totalElements}</span>{" "}
+                  {totalElements === 1 ? "profile" : "profiles"} found
+                </>
+              )}
             </p>
+            {totalPages > 1 && (
+              <p className="text-xs text-muted-foreground">
+                Page {page + 1} of {totalPages}
+              </p>
+            )}
           </div>
 
-          {filteredProfiles.length === 0 ? (
+          {loading ? (
+            <Card className="py-16">
+              <CardContent className="flex flex-col items-center justify-center text-center">
+                <Loader2 className="mb-4 size-10 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Searching profiles...</p>
+              </CardContent>
+            </Card>
+          ) : profiles.length === 0 && hasSearched ? (
             <Card className="py-16">
               <CardContent className="flex flex-col items-center justify-center text-center">
                 <Users className="mb-4 size-12 text-muted-foreground/50" />
@@ -651,15 +363,69 @@ export function SearchProfilesView() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredProfiles.map((profile) => (
-                <ProfileCard
-                  key={profile.id}
-                  profile={profile}
-                  onClick={() => setSelectedProfile(profile)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {profiles.map((profile) => (
+                  <ProfileCard
+                    key={profile.id}
+                    profile={profile}
+                    onClick={() => setSelectedProfile(profile)}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 0 || loading}
+                    onClick={() => handlePageChange(page - 1)}
+                    className="gap-1"
+                  >
+                    <ChevronLeft className="size-4" />
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                      let pageNum: number
+                      if (totalPages <= 7) {
+                        pageNum = i
+                      } else if (page < 3) {
+                        pageNum = i
+                      } else if (page > totalPages - 4) {
+                        pageNum = totalPages - 7 + i
+                      } else {
+                        pageNum = page - 3 + i
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={pageNum === page ? "default" : "outline"}
+                          size="sm"
+                          className="size-8 p-0"
+                          onClick={() => handlePageChange(pageNum)}
+                          disabled={loading}
+                        >
+                          {pageNum + 1}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages - 1 || loading}
+                    onClick={() => handlePageChange(page + 1)}
+                    className="gap-1"
+                  >
+                    Next
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

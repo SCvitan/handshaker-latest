@@ -1,6 +1,7 @@
 package com.handshaker.profiles_service.model;
 
 import com.handshaker.profiles_service.enums.ExperienceLevel;
+import com.handshaker.profiles_service.enums.Industry;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -18,7 +19,8 @@ public class JobPreferences {
     @JoinColumn(name = "profile_id")
     private UserProfile profile;
 
-    private String desiredIndustry;
+    @Enumerated(EnumType.STRING)
+    private Industry desiredIndustry;
     private String desiredPosition;
 
     private BigDecimal expectedMonthlyIncome;
@@ -36,7 +38,6 @@ public class JobPreferences {
 
     public JobPreferences() {}
 
-
     public UUID getId() {
         return id;
     }
@@ -53,11 +54,11 @@ public class JobPreferences {
         this.profile = profile;
     }
 
-    public String getDesiredIndustry() {
+    public Industry getDesiredIndustry() {
         return desiredIndustry;
     }
 
-    public void setDesiredIndustry(String desiredIndustry) {
+    public void setDesiredIndustry(Industry desiredIndustry) {
         this.desiredIndustry = desiredIndustry;
     }
 

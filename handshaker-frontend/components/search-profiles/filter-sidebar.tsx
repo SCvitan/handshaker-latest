@@ -25,6 +25,7 @@ import {
   MARITAL_STATUS_OPTIONS,
   EXPERIENCE_LEVEL_OPTIONS,
   LANGUAGE_OPTIONS,
+  INDUSTRIES,
 } from "@/lib/cv-types"
 
 interface FilterSidebarProps {
@@ -191,12 +192,22 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
           <AccordionContent className="space-y-4 pb-4">
             <div>
               <Label className="mb-1.5 block text-xs font-medium text-muted-foreground">Industry</Label>
-              <Input
-                placeholder="e.g. Transportation"
-                value={filters.industry}
-                onChange={(e) => update({ industry: e.target.value })}
-                className="h-8 text-sm"
-              />
+              <Select
+                value={filters.industry || "ALL"}
+                onValueChange={(v) => update({ industry: v === "ALL" ? "" : v })}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Any industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Any</SelectItem>
+                  {INDUSTRIES.map((ind) => (
+                    <SelectItem key={ind.value} value={ind.value}>
+                      {ind.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="mb-1.5 block text-xs font-medium text-muted-foreground">Position</Label>

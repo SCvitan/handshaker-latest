@@ -178,8 +178,8 @@ export default function CompanyProfilePage() {
                         Construction
                       </SelectItem>
                       <SelectItem value="HOSPITALITY">Hospitality</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
                       <SelectItem value="CLEANING">Cleaning</SelectItem>
+                      <SelectItem value="OTHER">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

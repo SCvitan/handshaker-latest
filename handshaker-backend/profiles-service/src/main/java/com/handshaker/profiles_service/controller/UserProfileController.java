@@ -1,7 +1,11 @@
 package com.handshaker.profiles_service.controller;
 
 import com.handshaker.profiles_service.dto.*;
+import com.handshaker.profiles_service.model.UserProfile;
 import com.handshaker.profiles_service.service.UserProfilesService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,11 +84,11 @@ public class UserProfileController {
     }
 
     @PostMapping("/search")
-    public List<UserSearchResponse> search(Authentication authentication,
-                                           @RequestBody UserSearchRequest request) {
-        UUID userId = UUID.fromString(authentication.getPrincipal().toString());
-        return service.search(request);
+    public Page<UserProfileResponse> searchProfiles(
+            @RequestBody UserProfileSearchRequest request,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return service.search(request, pageable);
     }
-
 
 }

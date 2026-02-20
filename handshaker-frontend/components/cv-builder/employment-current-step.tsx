@@ -5,7 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Home, MapPin, Briefcase, Save } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type { EmploymentCurrent } from "@/lib/cv-types"
+import { INDUSTRIES } from "@/lib/cv-types"
 
 interface EmploymentCurrentStepProps {
   data: EmploymentCurrent
@@ -60,13 +68,21 @@ export function EmploymentCurrentStep({
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="ec-industry">Industry</Label>
-              <Input
-                id="ec-industry"
-                name="industry"
-                placeholder="Transportation"
+              <Select
                 value={data.industry}
-                onChange={handleChange}
-              />
+                onValueChange={(v) => onUpdate({ ...data, industry: v })}
+              >
+                <SelectTrigger id="ec-industry">
+                  <SelectValue placeholder="Select industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INDUSTRIES.map((ind) => (
+                    <SelectItem key={ind.value} value={ind.value}>
+                      {ind.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="ec-jobTitle">Job Title in Croatia</Label>

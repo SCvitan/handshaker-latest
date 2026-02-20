@@ -6,7 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Save, Loader2 } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import type { EmploymentCurrent } from "@/lib/cv-types"
+import { INDUSTRIES } from "@/lib/cv-types"
 import { saveEmploymentCurrent } from "@/lib/cv-api"
 
 interface EmploymentCurrentSectionProps {
@@ -58,12 +66,21 @@ export function EmploymentCurrentSection({
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="ps-ec-industry">Industry</Label>
-          <Input
-            id="ps-ec-industry"
-            name="industry"
+          <Select
             value={data.industry}
-            onChange={handleChange}
-          />
+            onValueChange={(v) => setData({ ...data, industry: v })}
+          >
+            <SelectTrigger id="ps-ec-industry">
+              <SelectValue placeholder="Select industry" />
+            </SelectTrigger>
+            <SelectContent>
+              {INDUSTRIES.map((ind) => (
+                <SelectItem key={ind.value} value={ind.value}>
+                  {ind.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="ps-ec-jobTitle">Job Title in Croatia</Label>

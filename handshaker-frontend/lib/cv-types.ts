@@ -1,3 +1,15 @@
+export const INDUSTRIES = [
+  { value: "HEALTHCARE", label: "Healthcare" },
+  { value: "MANUFACTURING", label: "Manufacturing" },
+  { value: "TRANSPORTATION", label: "Transportation" },
+  { value: "CONSTRUCTION", label: "Construction" },
+  { value: "HOSPITALITY", label: "Hospitality" },
+  { value: "CLEANING", label: "Cleaning" },
+  { value: "OTHER", label: "Other" },
+] as const
+
+
+
 export interface PersonalInfo {
   firstName: string
   lastName: string

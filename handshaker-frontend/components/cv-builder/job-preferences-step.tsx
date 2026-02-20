@@ -21,7 +21,7 @@ import {
   Clock,
 } from "lucide-react"
 import type { JobPreferences } from "@/lib/cv-types"
-import { EXPERIENCE_LEVEL_OPTIONS } from "@/lib/cv-types"
+import { EXPERIENCE_LEVEL_OPTIONS, INDUSTRIES } from "@/lib/cv-types"
 
 interface JobPreferencesStepProps {
   data: JobPreferences
@@ -89,13 +89,21 @@ export function JobPreferencesStep({
               <Briefcase className="size-4 text-muted-foreground" />
               Industry *
             </Label>
-            <Input
-              id="desiredIndustry"
-              name="desiredIndustry"
-              placeholder="Transportation"
+            <Select
               value={data.desiredIndustry}
-              onChange={handleChange}
-            />
+              onValueChange={(v) => handleSelect("desiredIndustry", v)}
+            >
+              <SelectTrigger id="desiredIndustry">
+                <SelectValue placeholder="Select industry" />
+              </SelectTrigger>
+              <SelectContent>
+                {INDUSTRIES.map((ind) => (
+                  <SelectItem key={ind.value} value={ind.value}>
+                    {ind.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="desiredPosition" className="flex items-center gap-2">
@@ -214,7 +222,7 @@ export function JobPreferencesStep({
           <div className="flex items-center justify-between rounded-lg border border-border p-4">
             <div>
               <Label
-                htmlFor="accommodationRequired"
+                htmlFor="accommodationProvided"
                 className="text-sm font-medium"
               >
                 Accommodation Provided
@@ -224,7 +232,7 @@ export function JobPreferencesStep({
               </p>
             </div>
             <Switch
-              id="accommodationRequired"
+              id="accommodationProvided"
               checked={data.accommodationRequired}
               onCheckedChange={(c) =>
                 handleSwitch("accommodationRequired", c)
@@ -234,7 +242,7 @@ export function JobPreferencesStep({
           <div className="flex items-center justify-between rounded-lg border border-border p-4">
             <div>
               <Label
-                htmlFor="transportationRequired"
+                htmlFor="transportationProvided"
                 className="text-sm font-medium"
               >
                 Transportation Provided
@@ -244,7 +252,7 @@ export function JobPreferencesStep({
               </p>
             </div>
             <Switch
-              id="transportationRequired"
+              id="transportationProvided"
               checked={data.transportationRequired}
               onCheckedChange={(c) =>
                 handleSwitch("transportationRequired", c)

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select"
 import { Save, Loader2 } from "lucide-react"
 import type { JobPreferences } from "@/lib/cv-types"
-import { EXPERIENCE_LEVEL_OPTIONS } from "@/lib/cv-types"
+import { EXPERIENCE_LEVEL_OPTIONS, INDUSTRIES } from "@/lib/cv-types"
 import { saveJobPreferences } from "@/lib/cv-api"
 
 interface JobPreferencesSectionProps {
@@ -80,12 +80,21 @@ export function JobPreferencesSection({
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="p-industry">Industry</Label>
-          <Input
-            id="p-industry"
-            name="industry"
+          <Select
             value={data.desiredIndustry}
-            onChange={handleChange}
-          />
+            onValueChange={(v) => handleSelect("desiredIndustry", v)}
+          >
+            <SelectTrigger id="p-industry">
+              <SelectValue placeholder="Select industry" />
+            </SelectTrigger>
+            <SelectContent>
+              {INDUSTRIES.map((ind) => (
+                <SelectItem key={ind.value} value={ind.value}>
+                  {ind.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="p-position">Position</Label>

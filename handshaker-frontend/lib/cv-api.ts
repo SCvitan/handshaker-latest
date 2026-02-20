@@ -116,3 +116,64 @@ export async function saveCompanyProfile(data: CompanyProfileUpdate) {
     body: JSON.stringify(data),
   })
 }
+
+// ── Profile search endpoint (port 8083) ──
+
+export interface ProfileSearchRequest {
+  search?: string
+  gender?: string
+  maritalStatus?: string
+  stateOfOrigin?: string
+  minAge?: number
+  maxAge?: number
+  hasWorkPermit?: boolean
+  currentlyEmployed?: boolean
+  industry?: string
+  position?: string
+  experienceLevel?: string
+  minExperienceYears?: number
+  maxExperienceYears?: number
+  minIncome?: number
+  maxIncome?: number
+  accommodationRequired?: boolean
+  transportationRequired?: boolean
+  language?: string
+  minProficiency?: number
+  city?: string
+}
+
+export interface ProfileSearchResponse {
+  content: UserProfile[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+  first: boolean
+  last: boolean
+  empty: boolean
+}
+
+export async function searchProfiles(
+  filters: ProfileSearchRequest,
+  page = 0,
+  size = 20,
+): Promise<ProfileSearchResponse> {
+  const res = await authFetch(
+    `${API_BASE}/users/search`,
+    {
+      method: "POST",
+      body: JSON.stringify(filters),
+    },
+  )
+  const json = await res.json()
+  // Remap employmentCurrentResponse -> employmentCurrent in each profile
+  if (json.content) {
+    for (const profile of json.content) {
+      if (profile.employmentCurrentResponse && !profile.employmentCurrent) {
+        profile.employmentCurrent = profile.employmentCurrentResponse
+        delete profile.employmentCurrentResponse
+      }
+    }
+  }
+  return json as ProfileSearchResponse
+}

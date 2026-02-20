@@ -46,7 +46,7 @@ public class ProfileCompletenessCalculator {
 
     private boolean isJobPreferencesComplete(JobPreferences j) {
         return j != null
-                && notBlank(j.getDesiredIndustry())
+                && notBlank(j.getDesiredIndustry().toString())
                 && notBlank(j.getDesiredPosition())
                 && j.getExpectedMonthlyIncome() != null
                 && j.getDesiredWorkingHoursPerDay() != null

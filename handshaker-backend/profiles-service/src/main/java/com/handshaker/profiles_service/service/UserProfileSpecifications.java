@@ -1,84 +1,198 @@
 package com.handshaker.profiles_service.service;
 
-import com.handshaker.profiles_service.dto.UserSearchRequest;
-import com.handshaker.profiles_service.model.JobPreferences;
-import com.handshaker.profiles_service.model.LanguageSkill;
-import com.handshaker.profiles_service.model.LegalStatus;
-import com.handshaker.profiles_service.model.UserProfile;
+import com.handshaker.profiles_service.dto.UserProfileSearchRequest;
+import com.handshaker.profiles_service.model.*;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserProfileSpecifications {
 
-    public static Specification<UserProfile> withFilters(
-            UserSearchRequest req,
-            ProfileCompletenessCalculator calculator
-    ) {
+    public static Specification<UserProfile> build(UserProfileSearchRequest request) {
+
         return (root, query, cb) -> {
 
             query.distinct(true);
 
-            Join<UserProfile, JobPreferences> job = root.join("jobPreferences", JoinType.LEFT);
-            Join<UserProfile, LegalStatus> legal = root.join("legalStatus", JoinType.LEFT);
-            Join<UserProfile, LanguageSkill> lang = root.join("languageSkills", JoinType.LEFT);
+            List<Predicate> predicates = new ArrayList<>();
 
-                List<Predicate> predicates = new ArrayList<>();
+            // JOINs
+            Join<UserProfile, PersonalInfo> personal =
+                    root.join("personalInfo", JoinType.LEFT);
 
-            if (req.industry() != null) {
-                predicates.add(cb.equal(job.get("desiredIndustry"), req.industry()));
-            }
+            Join<UserProfile, LegalStatus> legal =
+                    root.join("legalStatus", JoinType.LEFT);
 
-            if (req.position() != null) {
-                predicates.add(cb.equal(job.get("desiredPosition"), req.position()));
-            }
+            Join<UserProfile, JobPreferences> job =
+                    root.join("jobPreferences", JoinType.LEFT);
 
-            if (req.experienceLevel() != null) {
-                predicates.add(cb.equal(job.get("experienceLevel"), req.experienceLevel()));
-            }
+            Join<UserProfile, EmploymentCurrent> employment =
+                    root.join("employmentCurrent", JoinType.LEFT);
 
-            if (req.minYearsOfExperience() != null) {
-                predicates.add(cb.ge(job.get("yearsOfExperience"), req.minYearsOfExperience()));
-            }
+            Join<UserProfile, Accommodation> accommodation =
+                    root.join("accommodation", JoinType.LEFT);
 
-            if (req.maxYearsOfExperience() != null) {
-                predicates.add(cb.le(job.get("yearsOfExperience"), req.maxYearsOfExperience()));
-            }
+            // 🔎 SEARCH (first + last name)
+            if (request.getSearch() != null && !request.getSearch().isBlank()) {
+                String pattern = "%" + request.getSearch().toLowerCase() + "%";
 
-            if (req.minExpectedIncome() != null) {
-                predicates.add(cb.ge(job.get("expectedMonthlyIncome"), req.minExpectedIncome()));
-            }
-
-            if (req.maxExpectedIncome() != null) {
-                predicates.add(cb.le(job.get("expectedMonthlyIncome"), req.maxExpectedIncome()));
-            }
-
-            if (req.hasWorkPermit() != null) {
-                predicates.add(cb.equal(legal.get("hasCroatianWorkPermit"), req.hasWorkPermit()));
-            }
-
-            if (req.currentlyEmployed() != null) {
-                predicates.add(cb.equal(legal.get("currentlyEmployedInCroatia"), req.currentlyEmployed()));
-            }
-
-            if (req.language() != null && req.minLanguageLevel() != null) {
-                predicates.add(cb.equal(lang.get("language"), req.language()));
-
-                Predicate levelPredicate = cb.and(
-                        cb.ge(lang.get("written"), req.minLanguageLevel()),
-                        cb.ge(lang.get("spoken"), req.minLanguageLevel()),
-                        cb.ge(lang.get("reading"), req.minLanguageLevel()),
-                        cb.ge(lang.get("understanding"), req.minLanguageLevel())
+                predicates.add(
+                        cb.or(
+                                cb.like(cb.lower(personal.get("firstName")), pattern),
+                                cb.like(cb.lower(personal.get("lastName")), pattern)
+                        )
                 );
-
-                predicates.add(levelPredicate);
             }
 
+            // Gender
+            if (request.getGender() != null) {
+                predicates.add(cb.equal(personal.get("gender"), request.getGender()));
+            }
+
+            // Marital Status
+            if (request.getMaritalStatus() != null) {
+                predicates.add(cb.equal(
+                        personal.get("maritalStatus"),   // Expression<MaritalStatus>
+                        request.getMaritalStatus()       // MaritalStatus ✅
+                ));
+            }
+
+            // State of origin
+            if (request.getStateOfOrigin() != null && !request.getStateOfOrigin().isBlank()) {
+                predicates.add(cb.equal(
+                        personal.get("stateOfOrigin"),   // Expression<String>
+                        request.getStateOfOrigin()       // String ✅
+                ));
+            }
+
+            // Age (calculate from dateOfBirth)
+            if (request.getMinAge() != null) {
+                LocalDate maxBirthDate = LocalDate.now().minusYears(request.getMinAge());
+                predicates.add(cb.lessThanOrEqualTo(personal.get("dateOfBirth"), maxBirthDate));
+            }
+
+            if (request.getMaxAge() != null) {
+                LocalDate minBirthDate = LocalDate.now().minusYears(request.getMaxAge());
+                predicates.add(cb.greaterThanOrEqualTo(personal.get("dateOfBirth"), minBirthDate));
+            }
+
+            // Work permit
+            if (request.getHasWorkPermit() != null) {
+                predicates.add(cb.equal(
+                        legal.get("hasCroatianWorkPermit"),
+                        request.getHasWorkPermit()
+                ));
+            }
+
+            if (request.getCurrentlyEmployed() != null) {
+                predicates.add(cb.equal(
+                        legal.get("currentlyEmployedInCroatia"),
+                        request.getCurrentlyEmployed()
+                ));
+            }
+
+            // Industry + Position (from current employment)
+            if (request.getIndustry() != null) {
+                predicates.add(cb.equal(employment.get("industry"), request.getIndustry()));
+            }
+
+            if (request.getPosition() != null) {
+                predicates.add(cb.equal(employment.get("jobTitleInCroatia"), request.getPosition()));
+            }
+
+            // Experience
+            if (request.getMinExperienceYears() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(
+                        job.get("yearsOfExperience"),
+                        request.getMinExperienceYears()
+                ));
+            }
+
+            if (request.getMaxExperienceYears() != null) {
+                predicates.add(cb.lessThanOrEqualTo(
+                        job.get("yearsOfExperience"),
+                        request.getMaxExperienceYears()
+                ));
+            }
+
+            if (request.getExperienceLevel() != null) {
+                predicates.add(cb.equal(
+                        job.get("experienceLevel"),
+                        request.getExperienceLevel()
+                ));
+            }
+
+            // Income
+            if (request.getMinIncome() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(
+                        job.get("expectedMonthlyIncome"),
+                        request.getMinIncome()
+                ));
+            }
+
+            if (request.getMaxIncome() != null) {
+                predicates.add(cb.lessThanOrEqualTo(
+                        job.get("expectedMonthlyIncome"),
+                        request.getMaxIncome()
+                ));
+            }
+
+            // Accommodation / Transportation required
+            if (request.getAccommodationRequired() != null) {
+                predicates.add(cb.equal(
+                        job.get("accommodationRequired"),
+                        request.getAccommodationRequired()
+                ));
+            }
+
+            if (request.getTransportationRequired() != null) {
+                predicates.add(cb.equal(
+                        job.get("transportationRequired"),
+                        request.getTransportationRequired()
+                ));
+            }
+
+            // City (from work address)
+            if (request.getCity() != null) {
+                predicates.add(cb.equal(
+                        employment.get("workAddress").get("city"),
+                        request.getCity()
+                ));
+            }
+
+            if (request.getLanguage() != null) {
+
+                Join<UserProfile, LanguageSkill> languageJoin =
+                        root.join("languageSkills", JoinType.INNER);
+
+                predicates.add(cb.equal(
+                        languageJoin.get("language"),
+                        request.getLanguage()
+                ));
+
+                if (request.getMinProficiency() != null) {
+
+                    Expression<Number> avg =
+                            cb.quot(
+                                    cb.sum(
+                                            cb.sum(languageJoin.get("written"), languageJoin.get("spoken")),
+                                            cb.sum(languageJoin.get("reading"), languageJoin.get("understanding"))
+                                    ),
+                                    4
+                            );
+
+                    predicates.add(
+                            cb.ge(avg, request.getMinProficiency())
+                    );
+                }
+            }
             return cb.and(predicates.toArray(new Predicate[0]));
+
         };
-    }
-}
+    }}
