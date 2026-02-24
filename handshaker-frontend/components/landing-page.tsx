@@ -114,17 +114,17 @@ export function LandingPage() {
             <StepCard
               number="01"
               title="Fill in your details"
-              description="Enter your basic profile information like name, email, phone, and a personal summary."
+              description="Enter your profile information like name, email, phone, and a personal summary."
             />
             <StepCard
               number="02"
               title="Choose your profession"
-              description="Pick from a range of professions. Each one unlocks fields specific to that industry."
+              description="Pick from a range of professions. Specify which professions are you interested in."
             />
             <StepCard
               number="03"
-              title="Complete & download"
-              description="Fill in the profession-specific details and review your completed CV summary."
+              title="Sit back & relax"
+              description="Sit back while employers find YOU, not the other way around."
             />
           </div>
         </div>
@@ -135,19 +135,19 @@ export function LandingPage() {
         <div className="mx-auto max-w-2xl text-center">
           <FileText className="mx-auto mb-4 size-10 text-primary" />
           <h2 className="text-3xl font-bold text-foreground">
-            Ready to build your CV?
+            Ready to build your profile?
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Join thousands of professionals who have created their CVs with our builder.
+            Join thousands of professionals who have created their profiles with our builder.
           </p>
           <div className="mt-8">
             {user ? (
               <Button
                 size="lg"
                 className="gap-2"
-                onClick={() => router.push("/cv-builder")}
+                onClick={() => router.push("/profile")}
               >
-                Go to CV Builder
+                Go to your profile
                 <ArrowRight className="size-4" />
               </Button>
             ) : (
@@ -169,7 +169,7 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2">
             <FileText className="size-5 text-primary" />
-            <span className="text-sm font-semibold text-foreground">CVBuilder</span>
+            <span className="text-sm font-semibold text-foreground">HandShaker</span>
           </div>
           <p className="text-sm text-muted-foreground">
             {"Built to help you land your next opportunity."}

@@ -2,6 +2,7 @@ package com.handshaker.profiles_service.model;
 
 import com.handshaker.profiles_service.enums.Gender;
 import com.handshaker.profiles_service.enums.MaritalStatus;
+import com.handshaker.profiles_service.enums.StateOfOrigin;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -26,7 +27,8 @@ public class PersonalInfo {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    private String stateOfOrigin;
+    @Enumerated(EnumType.STRING)
+    private StateOfOrigin stateOfOrigin;
     private String mobilePhone;
 
     @Enumerated(EnumType.STRING)
@@ -37,13 +39,20 @@ public class PersonalInfo {
 
     public PersonalInfo() {}
 
-
     public UUID getId() {
         return id;
     }
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public UserProfile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(UserProfile profile) {
+        this.profile = profile;
     }
 
     public String getFirstName() {
@@ -62,14 +71,6 @@ public class PersonalInfo {
         this.lastName = lastName;
     }
 
-    public UserProfile getProfile() {
-        return profile;
-    }
-
-    public void setProfile(UserProfile profile) {
-        this.profile = profile;
-    }
-
     public LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
@@ -86,11 +87,11 @@ public class PersonalInfo {
         this.gender = gender;
     }
 
-    public String getStateOfOrigin() {
+    public StateOfOrigin getStateOfOrigin() {
         return stateOfOrigin;
     }
 
-    public void setStateOfOrigin(String stateOfOrigin) {
+    public void setStateOfOrigin(StateOfOrigin stateOfOrigin) {
         this.stateOfOrigin = stateOfOrigin;
     }
 

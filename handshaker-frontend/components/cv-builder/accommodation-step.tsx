@@ -76,7 +76,7 @@ export function AccommodationStep({
               <Input
                 id="street"
                 name="street"
-                placeholder="Ilica"
+                placeholder="Street"
                 value={data.address.street}
                 onChange={handleAddressChange}
               />
@@ -86,7 +86,7 @@ export function AccommodationStep({
               <Input
                 id="houseNumber"
                 name="houseNumber"
-                placeholder="15A"
+                placeholder="15"
                 value={data.address.houseNumber}
                 onChange={handleAddressChange}
               />
@@ -127,7 +127,7 @@ export function AccommodationStep({
                 onValueChange={(v) => handleSelect("provider", v)}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select provider" />
+                  <SelectValue placeholder="Accommodation provided by:" />
                 </SelectTrigger>
                 <SelectContent>
                   {ACCOMMODATION_PROVIDER_OPTIONS.map((opt) => (

@@ -28,7 +28,7 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
           <FileText className="size-6 text-primary" />
-          <span className="text-lg font-bold text-foreground">CVBuilder</span>
+          <span className="text-lg font-bold text-foreground">HandShaker</span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
@@ -39,20 +39,12 @@ export function Navbar() {
             Home
           </Link>
           {user && user.role === "USER" && (
-            <>
-              <Link
-                href="/profile"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                My Profile
-              </Link>
-              <Link
-                href="/cv-builder"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Build CV
-              </Link>
-            </>
+            <Link
+              href="/profile"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              My Profile
+            </Link>
           )}
           {user && user.role === "COMPANY" && (
             <>
@@ -60,7 +52,7 @@ export function Navbar() {
                 href="/company-profile"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
-                Company Profile
+                My Company Profile
               </Link>
               <Link
                 href="/search-profiles"
@@ -103,22 +95,13 @@ export function Navbar() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {user.role === "USER" && (
-                  <>
-                    <DropdownMenuItem
-                      onClick={() => router.push("/profile")}
-                      className="cursor-pointer"
-                    >
-                      <User className="mr-2 size-4" />
-                      My Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => router.push("/cv-builder")}
-                      className="cursor-pointer"
-                    >
-                      <FileText className="mr-2 size-4" />
-                      Build CV
-                    </DropdownMenuItem>
-                  </>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/profile")}
+                    className="cursor-pointer"
+                  >
+                    <User className="mr-2 size-4" />
+                    My Profile
+                  </DropdownMenuItem>
                 )}
                 {user.role === "COMPANY" && (
                   <>
@@ -127,7 +110,7 @@ export function Navbar() {
                       className="cursor-pointer"
                     >
                       <Building2 className="mr-2 size-4" />
-                      Company Profile
+                      My Company Profile
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => router.push("/search-profiles")}

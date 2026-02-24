@@ -8,6 +8,14 @@ export const INDUSTRIES = [
   { value: "OTHER", label: "Other" },
 ] as const
 
+export const COUNTRIES = [
+  { value: "CROATIA", label: "Croatia" },
+  { value: "INDIA", label: "India" },
+  { value: "NEPAL", label: "Nepal" },
+  { value: "PHILIPPINES", label: "Philippines" },
+  { value: "EGYPT", label: "Egypt" },
+] as const
+
 
 
 export interface PersonalInfo {
@@ -161,7 +169,7 @@ export const GENDER_OPTIONS = ["MALE", "FEMALE", "OTHER"]
 export const MARITAL_STATUS_OPTIONS = ["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"]
 export const EXPERIENCE_LEVEL_OPTIONS = [
   "BEGINNER",
-  "EXPERIENCED_WITH_SUPERVISION",
+  "EXPERIENCED_NOT_INDEPENDENT",
   "EXPERIENCED_INDEPENDENT",
   "EXPERT",
 ]
@@ -182,6 +190,6 @@ export const LANGUAGE_OPTIONS = [
   "BOSNIAN",
   "SLOVENIAN",
 ]
-export const ACCOMMODATION_PROVIDER_OPTIONS = ["EMPLOYER", "SELF", "AGENCY", "OTHER"]
-export const ACCOMMODATION_TYPE_OPTIONS = ["ALONE", "WITH_FAMILY", "WITH_WORKERS", "SHARED"]
+export const ACCOMMODATION_PROVIDER_OPTIONS = ["EMPLOYER", "SELF"]
+export const ACCOMMODATION_TYPE_OPTIONS = ["ALONE", "WITH_FAMILY", "WITH_WORKERS", "WITH_FRIENDS"]
 export const PEOPLE_COUNT_OPTIONS = ["ONE", "TWO", "THREE", "FOUR", "FIVE_OR_MORE"]

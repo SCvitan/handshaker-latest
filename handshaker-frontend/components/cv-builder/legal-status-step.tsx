@@ -149,8 +149,9 @@ export function LegalStatusStep({
           <Input
             id="oib"
             name="oib"
-            placeholder="12345678901"
+            placeholder="11-number unique ID number"
             maxLength={11}
+            minLength={11}
             value={data.oib}
             onChange={handleChange}
           />

@@ -134,7 +134,7 @@ export function JobPreferencesStep({
               name="expectedMonthlyIncome"
               type="number"
               min={0}
-              placeholder="2000"
+              placeholder=""
               value={data.expectedMonthlyIncome}
               onChange={handleChange}
             />
@@ -151,7 +151,7 @@ export function JobPreferencesStep({
               name="yearsOfExperience"
               type="number"
               min={0}
-              placeholder="5"
+              placeholder=""
               value={data.yearsOfExperience}
               onChange={handleChange}
             />

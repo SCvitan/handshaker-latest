@@ -109,7 +109,7 @@ export function EmploymentCurrentStep({
               <Input
                 id="ec-employerAddress"
                 name="employerAddress"
-                placeholder="Ulica 3"
+                placeholder="Street name and number"
                 value={data.employerAddress}
                 onChange={handleChange}
               />
@@ -136,7 +136,7 @@ export function EmploymentCurrentStep({
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="ec-prevEmployers">
-                Number of Previous Employers in Croatia
+                Number of Employers You Worked For In Croatia
               </Label>
               <Input
                 id="ec-prevEmployers"

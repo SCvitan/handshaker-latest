@@ -33,10 +33,13 @@ export default function AuthPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    if (user) {
+    // Only redirect if user lands on auth page while already logged in
+    // (e.g. typing /auth in URL while logged in). Skip during form submission
+    // to let handleSubmit control the redirect destination.
+    if (user && !isSubmitting) {
       router.push("/")
     }
-  }, [user, router])
+  }, [user, isSubmitting, router])
 
   useEffect(() => {
     const modeParam = searchParams.get("mode")
@@ -53,13 +56,15 @@ export default function AuthPage() {
     try {
       if (mode === "login") {
         await login(email, password)
+        router.push("/")
       } else {
         await register(email, password, role)
+        router.push(role === "USER" ? "/cv-builder" : "/company-profile")
       }
-      router.push("/")
+      // Do NOT reset isSubmitting on success — keep it true so the
+      // useEffect guard stays active until navigation completes.
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong")
-    } finally {
       setIsSubmitting(false)
     }
   }

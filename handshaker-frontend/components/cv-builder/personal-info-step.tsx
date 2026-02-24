@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select"
 import { ArrowRight, Home, User, Phone, Globe, Calendar } from "lucide-react"
 import type { PersonalInfo } from "@/lib/cv-types"
-import { GENDER_OPTIONS, MARITAL_STATUS_OPTIONS } from "@/lib/cv-types"
+import { GENDER_OPTIONS, MARITAL_STATUS_OPTIONS, COUNTRIES } from "@/lib/cv-types"
 
 interface PersonalInfoStepProps {
   data: PersonalInfo
@@ -68,7 +68,7 @@ export function PersonalInfoStep({
             <Input
               id="firstName"
               name="firstName"
-              placeholder="Sime"
+              placeholder="First name"
               value={data.firstName}
               onChange={handleChange}
             />
@@ -81,7 +81,7 @@ export function PersonalInfoStep({
             <Input
               id="lastName"
               name="lastName"
-              placeholder="Cvitan"
+              placeholder="Last name"
               value={data.lastName}
               onChange={handleChange}
             />
@@ -123,18 +123,26 @@ export function PersonalInfoStep({
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="stateOfOrigin" className="flex items-center gap-2">
+        <div className="space-y-2">
+            <Label className="flex items-center gap-2">
               <Globe className="size-4 text-muted-foreground" />
               State of Origin
             </Label>
-            <Input
-              id="stateOfOrigin"
-              name="stateOfOrigin"
-              placeholder="Croatia"
+            <Select
               value={data.stateOfOrigin}
-              onChange={handleChange}
-            />
+              onValueChange={(v) => handleSelect("stateOfOrigin", v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="mobilePhoneNumber" className="flex items-center gap-2">
@@ -145,7 +153,7 @@ export function PersonalInfoStep({
               id="mobilePhoneNumber"
               name="mobilePhoneNumber"
               type="tel"
-              placeholder="0914508995"
+              placeholder=""
               value={data.mobilePhoneNumber}
               onChange={handleChange}
             />
@@ -178,7 +186,7 @@ export function PersonalInfoStep({
               name="numberOfChildren"
               type="number"
               min={0}
-              placeholder="0"
+              placeholder=""
               value={data.numberOfChildren}
               onChange={handleChange}
             />

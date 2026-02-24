@@ -3,7 +3,7 @@ package com.handshaker.profiles_service.dto;
 import java.time.LocalDate;
 
 public record LegalStatusResponse(
-        boolean hasWorkPermit,
+        boolean hasCroatianWorkPermit,
         LocalDate workPermitExpirationDate,
         boolean currentlyEmployedInCroatia,
         LocalDate dateOfArrivalInCroatia,

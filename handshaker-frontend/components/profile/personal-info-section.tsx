@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select"
 import { Save, Loader2 } from "lucide-react"
 import type { PersonalInfo } from "@/lib/cv-types"
-import { GENDER_OPTIONS, MARITAL_STATUS_OPTIONS } from "@/lib/cv-types"
+import { GENDER_OPTIONS, MARITAL_STATUS_OPTIONS, COUNTRIES } from "@/lib/cv-types"
 import { savePersonalInfo } from "@/lib/cv-api"
 
 interface PersonalInfoSectionProps {
@@ -113,14 +113,23 @@ export function PersonalInfoSection({
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="p-stateOfOrigin">State of Origin</Label>
-          <Input
-            id="p-stateOfOrigin"
-            name="stateOfOrigin"
+      <div className="space-y-2">
+          <Label>State of Origin</Label>
+          <Select
             value={data.stateOfOrigin}
-            onChange={handleChange}
-          />
+            onValueChange={(v) => handleSelect("stateOfOrigin", v)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select country" />
+            </SelectTrigger>
+            <SelectContent>
+              {COUNTRIES.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="p-mobilePhone">Mobile Phone</Label>

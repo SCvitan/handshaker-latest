@@ -97,10 +97,10 @@ export function JobPreferencesSection({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="p-position">Position</Label>
+          <Label htmlFor="p-desiredPosition">Position</Label>
           <Input
-            id="p-position"
-            name="position"
+            id="p-desiredPosition"
+            name="desiredPosition"
             value={data.desiredPosition}
             onChange={handleChange}
           />

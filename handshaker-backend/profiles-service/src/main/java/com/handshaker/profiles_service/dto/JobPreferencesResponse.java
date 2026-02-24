@@ -9,10 +9,10 @@ public record JobPreferencesResponse(
         Industry desiredIndustry,
         String desiredPosition,
         BigDecimal expectedMonthlyIncome,
-        boolean accommodationProvided,
-        boolean transportationProvided,
-        int workingHoursPerDay,
-        int workingDaysPerMonth,
+        boolean accommodationRequired,
+        boolean transportationRequired,
+        int desiredWorkingHoursPerDay,
+        int desiredWorkingDaysPerMonth,
         int yearsOfExperience,
         ExperienceLevel experienceLevel
 ) {}
