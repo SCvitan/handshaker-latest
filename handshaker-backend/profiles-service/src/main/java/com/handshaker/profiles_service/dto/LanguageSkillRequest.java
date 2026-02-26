@@ -4,8 +4,8 @@ import com.handshaker.profiles_service.enums.Language;
 
 public record LanguageSkillRequest(
         Language language,
-        int written,
-        int spoken,
-        int reading,
-        int understanding
+        Integer written,
+        Integer spoken,
+        Integer reading,
+        Integer understanding
 ) {}

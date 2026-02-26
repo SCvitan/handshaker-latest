@@ -13,5 +13,5 @@ public record UserProfileResponse(
         List<LanguageSkillResponse> languages,
         AccommodationResponse accommodation,
         EmploymentCurrentResponse employmentCurrent,
-        double profileCompletion
+        Double profileCompletion
 ) {}

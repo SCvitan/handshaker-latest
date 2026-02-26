@@ -253,89 +253,28 @@ public class UserProfilesService {
     public Page<UserProfileResponse> search(UserProfileSearchRequest request,
                                             Pageable pageable) {
 
-        // Build Specification dynamically
-        var spec = UserProfileSpecifications.build(request);
+        Specification<UserProfile> spec = UserProfileSpecifications.build(request);
 
-        // Execute query with pagination
         Page<UserProfile> profiles = repository.findAll(spec, pageable);
 
-        // Map entities to DTOs
-        return profiles.map(profile -> new UserProfileResponse(
+        return profiles.map(this::mapToUserProfileResponse);
+    }
+
+    private UserProfileResponse mapToUserProfileResponse(UserProfile profile) {
+
+        return new UserProfileResponse(
                 profile.getId(),
                 profile.getEmail(),
 
-                // PersonalInfo
-                profile.getPersonalInfo() != null ?
-                        new PersonalInfoResponse(
-                                profile.getPersonalInfo().getFirstName(),
-                                profile.getPersonalInfo().getLastName(),
-                                profile.getPersonalInfo().getDateOfBirth(),
-                                profile.getPersonalInfo().getGender(),
-                                profile.getPersonalInfo().getStateOfOrigin(),
-                                profile.getPersonalInfo().getMobilePhone(),
-                                profile.getPersonalInfo().getMaritalStatus(),
-                                profile.getPersonalInfo().getNumberOfChildren()
-                        ) : null,
+                mapPersonal(profile.getPersonalInfo(), profile),
+                mapLegal(profile.getLegalStatus()),
+                mapPreferences(profile.getJobPreferences()),
+                mapLanguages(profile.getLanguageSkills()),
+                mapAccommodation(profile.getAccommodation()),
+                mapEmploymentCurrent(profile.getEmploymentCurrent()),
 
-                // LegalStatus
-                profile.getLegalStatus() != null ?
-                        new LegalStatusResponse(
-                                profile.getLegalStatus().isHasCroatianWorkPermit(),
-                                profile.getLegalStatus().getWorkPermitExpirationDate(),
-                                profile.getLegalStatus().isCurrentlyEmployedInCroatia(),
-                                profile.getLegalStatus().getDateOfArrivalInCroatia(),
-                                profile.getLegalStatus().getPassportExpirationDate(),
-                                profile.getLegalStatus().getOib()
-                        ) : null,
-
-                // JobPreferences
-                profile.getJobPreferences() != null ?
-                        new JobPreferencesResponse(
-                                profile.getJobPreferences().getDesiredIndustry(),
-                                profile.getJobPreferences().getDesiredPosition(),
-                                profile.getJobPreferences().getExpectedMonthlyIncome(),
-                                profile.getJobPreferences().isAccommodationRequired(),
-                                profile.getJobPreferences().isTransportationRequired(),
-                                profile.getJobPreferences().getDesiredWorkingHoursPerDay(),
-                                profile.getJobPreferences().getDesiredWorkingDaysPerMonth(),
-                                profile.getJobPreferences().getYearsOfExperience(),
-                                profile.getJobPreferences().getExperienceLevel()
-                        ) : null,
-
-                // Languages
-                profile.getLanguageSkills() != null ?
-                        profile.getLanguageSkills().stream()
-                                .map(ls -> new LanguageSkillResponse(
-                                        ls.getLanguage(),
-                                        ls.getWritten(),
-                                        ls.getSpoken(),
-                                        ls.getReading(),
-                                        ls.getUnderstanding()
-                                ))
-                                .toList() : List.of(),
-
-                // Accommodation
-                profile.getAccommodation() != null
-                        ? mapAccommodation(profile.getAccommodation())
-                        : null,
-
-                // EmploymentCurrent
-                profile.getEmploymentCurrent() != null
-                        ? new EmploymentCurrentResponse(
-                        profile.getEmploymentCurrent().getIndustry(),
-                        profile.getEmploymentCurrent().getJobTitleInCroatia(),
-                        profile.getEmploymentCurrent().getEmployerName(),
-                        profile.getEmploymentCurrent().getEmployerAddress(),
-                        profile.getEmploymentCurrent().getEmployerContactInfo(),
-                        profile.getEmploymentCurrent().getCityOfWork(),
-                        profile.getEmploymentCurrent().getNumberOfPreviousEmployersInCroatia(),
-                        mapAddress(profile.getEmploymentCurrent().getWorkAddress())
-                )
-                        : null,
-
-                // Profile completion (example: you may implement your own calculation)
-                calculateProfileCompletion(profile)
-        ));
+                completenessCalculator.calculate(profile)
+        );
     }
 
     private AddressResponse mapAddress(Address address) {
@@ -357,7 +296,7 @@ public class UserProfilesService {
      */
     private double calculateProfileCompletion(UserProfile profile) {
         int filled = 0;
-        int total = 8; // number of sections we check
+        int total = 8;
 
         if (profile.getPersonalInfo() != null) filled++;
         if (profile.getLegalStatus() != null) filled++;
@@ -476,7 +415,7 @@ public class UserProfilesService {
         );
     }
 
-    private JobPreferencesResponse mapPreferences(JobPreferences prefs) {
+    private JobPreferencesResponse  mapPreferences(JobPreferences prefs) {
 
         if (prefs == null) {
             return null;

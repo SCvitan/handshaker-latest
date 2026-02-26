@@ -11,8 +11,8 @@ public record JobPreferencesResponse(
         BigDecimal expectedMonthlyIncome,
         boolean accommodationRequired,
         boolean transportationRequired,
-        int desiredWorkingHoursPerDay,
-        int desiredWorkingDaysPerMonth,
-        int yearsOfExperience,
+        Integer desiredWorkingHoursPerDay,
+        Integer desiredWorkingDaysPerMonth,
+        Integer yearsOfExperience,
         ExperienceLevel experienceLevel
 ) {}

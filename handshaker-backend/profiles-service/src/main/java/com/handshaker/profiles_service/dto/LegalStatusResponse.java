@@ -3,9 +3,9 @@ package com.handshaker.profiles_service.dto;
 import java.time.LocalDate;
 
 public record LegalStatusResponse(
-        boolean hasCroatianWorkPermit,
+        Boolean hasCroatianWorkPermit,
         LocalDate workPermitExpirationDate,
-        boolean currentlyEmployedInCroatia,
+        Boolean currentlyEmployedInCroatia,
         LocalDate dateOfArrivalInCroatia,
         LocalDate passportExpirationDate,
         String oib
