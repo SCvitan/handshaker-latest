@@ -8,8 +8,8 @@ import type {
   EmploymentCurrent,
 } from "./cv-types"
 
-//const API_BASE = "http://142.132.181.45:8083"
-const API_BASE = "http://localhost:8083"
+const API_BASE = "http://142.132.181.45:8083"
+//const API_BASE = "http://localhost:8083"
 
 /**
  * Authenticated fetch
@@ -87,8 +87,8 @@ export async function saveEmploymentCurrent(data: EmploymentCurrent) {
 
 // ── Company endpoints (port 8082) ──
 
-const COMPANY_API_BASE = "http://localhost:8082"
-//const COMPANY_API_BASE = "http://142.132.181.45:8082"
+//const COMPANY_API_BASE = "http://localhost:8082"
+const COMPANY_API_BASE = "http://142.132.181.45:8082"
 
 export interface CompanyProfile {
   id: string
