@@ -33,7 +33,9 @@ export function PersonalInfoSection({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     if (name === "numberOfChildren") {
-      setData({ ...data, [name]: value === "" ? "" : Number(value) })
+      setData({ ...data, [name]: value === "" ? null : Number(value) })
+    } else if (name === "dateOfBirth") {
+      setData({ ...data, [name]: value === "" ? null : value })
     } else {
       setData({ ...data, [name]: value })
     }
@@ -88,14 +90,14 @@ export function PersonalInfoSection({
             id="p-dateOfBirth"
             name="dateOfBirth"
             type="date"
-            value={data.dateOfBirth}
+            value={data.dateOfBirth ?? ""}
             onChange={handleChange}
           />
         </div>
         <div className="space-y-2">
           <Label>Gender</Label>
           <Select
-            value={data.gender}
+            value={data.gender ?? ""}
             onValueChange={(v) => handleSelect("gender", v)}
           >
             <SelectTrigger className="w-full">
@@ -113,10 +115,10 @@ export function PersonalInfoSection({
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
-      <div className="space-y-2">
+        <div className="space-y-2">
           <Label>State of Origin</Label>
           <Select
-            value={data.stateOfOrigin}
+            value={data.stateOfOrigin ?? ""}
             onValueChange={(v) => handleSelect("stateOfOrigin", v)}
           >
             <SelectTrigger className="w-full">
@@ -132,10 +134,10 @@ export function PersonalInfoSection({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="p-mobilePhone">Mobile Phone</Label>
+          <Label htmlFor="p-mobilePhoneNumber">Mobile Phone</Label>
           <Input
-            id="p-mobilePhone"
-            name="mobilePhone"
+            id="p-mobilePhoneNumber"
+            name="mobilePhoneNumber"
             type="tel"
             value={data.mobilePhoneNumber}
             onChange={handleChange}
@@ -147,7 +149,7 @@ export function PersonalInfoSection({
         <div className="space-y-2">
           <Label>Marital Status</Label>
           <Select
-            value={data.maritalStatus}
+            value={data.maritalStatus ?? ""}
             onValueChange={(v) => handleSelect("maritalStatus", v)}
           >
             <SelectTrigger className="w-full">
@@ -169,7 +171,7 @@ export function PersonalInfoSection({
             name="numberOfChildren"
             type="number"
             min={0}
-            value={data.numberOfChildren}
+            value={data.numberOfChildren ?? ""}
             onChange={handleChange}
           />
         </div>

@@ -26,7 +26,14 @@ export function LegalStatusStep({
   isSaving,
 }: LegalStatusStepProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate({ ...data, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    // Date fields should be null when empty
+    const dateFields = ["workPermitExpirationDate", "dateOfArrivalInCroatia", "passportExpirationDate"]
+    if (dateFields.includes(name)) {
+      onUpdate({ ...data, [name]: value === "" ? null : value })
+    } else {
+      onUpdate({ ...data, [name]: value })
+    }
   }
 
   const handleSwitch = (name: keyof LegalStatus, checked: boolean) => {
@@ -77,7 +84,7 @@ export function LegalStatusStep({
               id="workPermitExpirationDate"
               name="workPermitExpirationDate"
               type="date"
-              value={data.workPermitExpirationDate}
+              value={data.workPermitExpirationDate ?? ""}
               onChange={handleChange}
             />
           </div>
@@ -120,7 +127,7 @@ export function LegalStatusStep({
               id="dateOfArrivalInCroatia"
               name="dateOfArrivalInCroatia"
               type="date"
-              value={data.dateOfArrivalInCroatia}
+              value={data.dateOfArrivalInCroatia ?? ""}
               onChange={handleChange}
             />
           </div>
@@ -136,7 +143,7 @@ export function LegalStatusStep({
               id="passportExpirationDate"
               name="passportExpirationDate"
               type="date"
-              value={data.passportExpirationDate}
+              value={data.passportExpirationDate ?? ""}
               onChange={handleChange}
             />
           </div>
@@ -149,9 +156,8 @@ export function LegalStatusStep({
           <Input
             id="oib"
             name="oib"
-            placeholder="11-number unique ID number"
+            placeholder="12345678901"
             maxLength={11}
-            minLength={11}
             value={data.oib}
             onChange={handleChange}
           />

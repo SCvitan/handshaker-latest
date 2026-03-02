@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { EmploymentCurrent } from "@/lib/cv-types"
-import { INDUSTRIES } from "@/lib/cv-types"
+import { INDUSTRIES, DEFAULT_WORK_ADDRESS } from "@/lib/cv-types"
 import { saveEmploymentCurrent } from "@/lib/cv-api"
 
 interface EmploymentCurrentSectionProps {
@@ -30,20 +30,32 @@ export function EmploymentCurrentSection({
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState("")
 
+  const workAddress = data.workAddress ?? DEFAULT_WORK_ADDRESS
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     if (name === "numberOfPreviousEmployersInCroatia") {
-      setData({ ...data, [name]: value === "" ? "" : Number(value) })
+      setData({ ...data, [name]: value === "" ? null : Number(value) })
+    } else if (name === "jobTitleInCroatia") {
+      setData({ ...data, [name]: value === "" ? null : value })
     } else {
       setData({ ...data, [name]: value })
     }
   }
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setData({
-      ...data,
-      workAddress: { ...data.workAddress, [e.target.name]: e.target.value },
-    })
+    const { name, value } = e.target
+    if (name === "postalCode" || name === "houseNumber") {
+      setData({
+        ...data,
+        workAddress: { ...workAddress, [name]: value === "" ? null : value },
+      })
+    } else {
+      setData({
+        ...data,
+        workAddress: { ...workAddress, [name]: value },
+      })
+    }
   }
 
   async function handleSave() {
@@ -67,7 +79,7 @@ export function EmploymentCurrentSection({
         <div className="space-y-2">
           <Label htmlFor="ps-ec-industry">Industry</Label>
           <Select
-            value={data.industry}
+            value={data.industry ?? ""}
             onValueChange={(v) => setData({ ...data, industry: v })}
           >
             <SelectTrigger id="ps-ec-industry">
@@ -87,7 +99,7 @@ export function EmploymentCurrentSection({
           <Input
             id="ps-ec-jobTitle"
             name="jobTitleInCroatia"
-            value={data.jobTitleInCroatia}
+            value={data.jobTitleInCroatia ?? ""}
             onChange={handleChange}
           />
         </div>
@@ -144,7 +156,7 @@ export function EmploymentCurrentSection({
           name="numberOfPreviousEmployersInCroatia"
           type="number"
           min={0}
-          value={data.numberOfPreviousEmployersInCroatia}
+          value={data.numberOfPreviousEmployersInCroatia ?? ""}
           onChange={handleChange}
         />
       </div>
@@ -157,7 +169,7 @@ export function EmploymentCurrentSection({
             <Input
               id="ps-ec-wa-street"
               name="street"
-              value={data.workAddress.street}
+              value={workAddress.street}
               onChange={handleAddressChange}
             />
           </div>
@@ -166,7 +178,7 @@ export function EmploymentCurrentSection({
             <Input
               id="ps-ec-wa-house"
               name="houseNumber"
-              value={data.workAddress.houseNumber}
+              value={workAddress.houseNumber ?? ""}
               onChange={handleAddressChange}
             />
           </div>
@@ -175,7 +187,7 @@ export function EmploymentCurrentSection({
             <Input
               id="ps-ec-wa-city"
               name="city"
-              value={data.workAddress.city}
+              value={workAddress.city}
               onChange={handleAddressChange}
             />
           </div>
@@ -184,7 +196,7 @@ export function EmploymentCurrentSection({
             <Input
               id="ps-ec-wa-postal"
               name="postalCode"
-              value={data.workAddress.postalCode}
+              value={workAddress.postalCode ?? ""}
               onChange={handleAddressChange}
             />
           </div>

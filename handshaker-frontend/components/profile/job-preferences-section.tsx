@@ -35,14 +35,14 @@ export function JobPreferencesSection({
     const { name, value } = e.target
     const numericFields = [
       "expectedMonthlyIncome",
-      "workingHoursPerDay",
-      "workingDaysPerMonth",
+      "desiredWorkingHoursPerDay",
+      "desiredWorkingDaysPerMonth",
       "yearsOfExperience",
     ]
     if (numericFields.includes(name)) {
-      setData({ ...data, [name]: value === "" ? "" : Number(value) })
+      setData({ ...data, [name]: value === "" ? null : Number(value) })
     } else {
-      setData({ ...data, [name]: value })
+      setData({ ...data, [name]: value === "" ? null : value })
     }
   }
 
@@ -79,12 +79,12 @@ export function JobPreferencesSection({
     <div className="space-y-4">
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="p-industry">Industry</Label>
+          <Label htmlFor="p-desiredIndustry">Industry</Label>
           <Select
-            value={data.desiredIndustry}
+            value={data.desiredIndustry ?? ""}
             onValueChange={(v) => handleSelect("desiredIndustry", v)}
           >
-            <SelectTrigger id="p-industry">
+            <SelectTrigger id="p-desiredIndustry">
               <SelectValue placeholder="Select industry" />
             </SelectTrigger>
             <SelectContent>
@@ -101,7 +101,7 @@ export function JobPreferencesSection({
           <Input
             id="p-desiredPosition"
             name="desiredPosition"
-            value={data.desiredPosition}
+            value={data.desiredPosition ?? ""}
             onChange={handleChange}
           />
         </div>
@@ -115,7 +115,7 @@ export function JobPreferencesSection({
             name="expectedMonthlyIncome"
             type="number"
             min={0}
-            value={data.expectedMonthlyIncome}
+            value={data.expectedMonthlyIncome ?? ""}
             onChange={handleChange}
           />
         </div>
@@ -126,7 +126,7 @@ export function JobPreferencesSection({
             name="yearsOfExperience"
             type="number"
             min={0}
-            value={data.yearsOfExperience}
+            value={data.yearsOfExperience ?? ""}
             onChange={handleChange}
           />
         </div>
@@ -135,7 +135,7 @@ export function JobPreferencesSection({
       <div className="space-y-2">
         <Label>Experience Level</Label>
         <Select
-          value={data.experienceLevel}
+          value={data.experienceLevel ?? ""}
           onValueChange={(v) => handleSelect("experienceLevel", v)}
         >
           <SelectTrigger className="w-full">
@@ -160,7 +160,7 @@ export function JobPreferencesSection({
             type="number"
             min={1}
             max={24}
-            value={data.desiredWorkingHoursPerDay}
+            value={data.desiredWorkingHoursPerDay ?? ""}
             onChange={handleChange}
           />
         </div>
@@ -172,7 +172,7 @@ export function JobPreferencesSection({
             type="number"
             min={1}
             max={31}
-            value={data.desiredWorkingDaysPerMonth}
+            value={data.desiredWorkingDaysPerMonth ?? ""}
             onChange={handleChange}
           />
         </div>
@@ -182,10 +182,10 @@ export function JobPreferencesSection({
         <div className="flex items-center justify-between rounded-lg border border-border p-4">
           <div>
             <Label className="text-sm font-medium">
-              Accommodation Provided
+              Accommodation Required
             </Label>
             <p className="text-xs text-muted-foreground">
-              Employer provides accommodation?
+              Do you require accommodation?
             </p>
           </div>
           <Switch
@@ -198,10 +198,10 @@ export function JobPreferencesSection({
         <div className="flex items-center justify-between rounded-lg border border-border p-4">
           <div>
             <Label className="text-sm font-medium">
-              Transportation Provided
+              Transportation Required
             </Label>
             <p className="text-xs text-muted-foreground">
-              Employer provides transportation?
+              Do you require transportation?
             </p>
           </div>
           <Switch

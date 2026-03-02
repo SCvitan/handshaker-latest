@@ -40,7 +40,7 @@ function calculateAge(dateOfBirth: string): number {
   return age
 }
 
-function formatDate(d: string) {
+function formatDate(d: string | null) {
   if (!d) return "-"
   return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
 }
@@ -249,7 +249,7 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
                   >
                     <div className="mb-1 flex items-center justify-between">
                       <span className="text-sm font-medium text-foreground">
-                        {lang.language.charAt(0) + lang.language.slice(1).toLowerCase()}
+                        {lang.language ? lang.language.charAt(0) + lang.language.slice(1).toLowerCase() : "-"}
                       </span>
                       <span className="text-xs text-muted-foreground">Avg: {avg}/10</span>
                     </div>
@@ -280,8 +280,8 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
             <Row
               label="Address"
               value={
-                accommodation.address.street
-                  ? `${accommodation.address.street} ${accommodation.address.houseNumber}, ${accommodation.address.postalCode} ${accommodation.address.city}`
+                accommodation.address?.street
+                  ? `${accommodation.address.street} ${accommodation.address.houseNumber || ""}, ${accommodation.address.postalCode || ""} ${accommodation.address.city}`
                   : "-"
               }
             />
@@ -333,8 +333,8 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
               <Row
                 label="Work Address"
                 value={
-                  employmentCurrent.workAddress.street
-                    ? `${employmentCurrent.workAddress.street} ${employmentCurrent.workAddress.houseNumber}, ${employmentCurrent.workAddress.postalCode} ${employmentCurrent.workAddress.city}`
+                  employmentCurrent.workAddress?.street
+                    ? `${employmentCurrent.workAddress.street} ${employmentCurrent.workAddress.houseNumber || ""}, ${employmentCurrent.workAddress.postalCode || ""} ${employmentCurrent.workAddress.city}`
                     : "-"
                 }
               />

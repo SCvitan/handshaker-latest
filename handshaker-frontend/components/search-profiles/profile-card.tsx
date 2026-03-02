@@ -25,7 +25,7 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
     profile
   const completion = Math.round((profile.profileCompletion || 0) * 100)
   const age = personalInfo.dateOfBirth ? calculateAge(personalInfo.dateOfBirth) : null
-  const city = accommodation.address.city || employmentCurrent.cityOfWork || ""
+  const city = accommodation.address?.city || employmentCurrent?.cityOfWork || ""
 
   return (
     <Card
@@ -87,7 +87,7 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
         {/* Tags row */}
         <div className="flex flex-wrap gap-1.5">
           {/* Experience */}
-          {jobPreferences.yearsOfExperience !== "" && (
+          {jobPreferences.yearsOfExperience !== null && (
             <Badge variant="secondary" className="text-xs font-normal">
               <Clock className="mr-1 size-3" />
               {jobPreferences.yearsOfExperience} yrs exp

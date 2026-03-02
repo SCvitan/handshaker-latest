@@ -35,7 +35,7 @@ export function LanguagesStep({
   const addLanguage = () => {
     onUpdate([
       ...data,
-      { language: "", written: 1, spoken: 1, reading: 1, understanding: 1 },
+      { language: null, written: 1, spoken: 1, reading: 1, understanding: 1 },
     ])
   }
 
@@ -53,7 +53,7 @@ export function LanguagesStep({
     onUpdate(updated)
   }
 
-  const isValid = data.length > 0 && data.every((l) => l.language !== "")
+  const isValid = data.length > 0 && data.every((l) => l.language !== null && l.language !== "")
 
   return (
     <div className="space-y-6">
@@ -100,7 +100,7 @@ export function LanguagesStep({
             <div className="space-y-2">
               <Label>Language *</Label>
               <Select
-                value={lang.language}
+                value={lang.language ?? ""}
                 onValueChange={(v) => updateLanguage(index, "language", v)}
               >
                 <SelectTrigger className="w-full">

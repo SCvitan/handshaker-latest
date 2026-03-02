@@ -16,42 +16,40 @@ export const COUNTRIES = [
   { value: "EGYPT", label: "Egypt" },
 ] as const
 
-
-
 export interface PersonalInfo {
   firstName: string
   lastName: string
-  dateOfBirth: string
-  gender: string
-  stateOfOrigin: string
+  dateOfBirth: string | null
+  gender: string | null
+  stateOfOrigin: string | null
   mobilePhoneNumber: string
-  maritalStatus: string
-  numberOfChildren: number | ""
+  maritalStatus: string | null
+  numberOfChildren: number | null
 }
 
 export interface LegalStatus {
   hasCroatianWorkPermit: boolean
-  workPermitExpirationDate: string
+  workPermitExpirationDate: string | null
   currentlyEmployedInCroatia: boolean
-  dateOfArrivalInCroatia: string
-  passportExpirationDate: string
+  dateOfArrivalInCroatia: string | null
+  passportExpirationDate: string | null
   oib: string
 }
 
 export interface JobPreferences {
-  desiredIndustry: string
-  desiredPosition: string
-  expectedMonthlyIncome: number | ""
+  desiredIndustry: string | null
+  desiredPosition: string | null
+  expectedMonthlyIncome: number | null
   accommodationRequired: boolean
   transportationRequired: boolean
-  desiredWorkingHoursPerDay: number | ""
-  desiredWorkingDaysPerMonth: number | ""
-  yearsOfExperience: number | ""
-  experienceLevel: string
+  desiredWorkingHoursPerDay: number | null
+  desiredWorkingDaysPerMonth: number | null
+  yearsOfExperience: number | null
+  experienceLevel: string | null
 }
 
 export interface Language {
-  language: string
+  language: string | null
   written: number
   spoken: number
   reading: number
@@ -60,31 +58,45 @@ export interface Language {
 
 export interface Accommodation {
   address: {
-    postalCode: string
+    postalCode: string | null
     city: string
     street: string
     houseNumber: string
-  }
-  provider: string
-  type: string
-  peopleInAccommodation: string
-  peopleInRoom: string
+  } | null
+  provider: string | null
+  type: string | null
+  peopleInAccommodation: string | null
+  peopleInRoom: string | null
 }
 
 export interface EmploymentCurrent {
-  industry: string
-  jobTitleInCroatia: string
+  industry: string | null
+  jobTitleInCroatia: string | null
   employerName: string
   employerAddress: string
   employerContactInfo: string
   cityOfWork: string
-  numberOfPreviousEmployersInCroatia: number | ""
+  numberOfPreviousEmployersInCroatia: number | null
   workAddress: {
-    postalCode: string
+    postalCode: string | null
     city: string
     street: string
-    houseNumber: string
-  }
+    houseNumber: string | null
+  } | null
+}
+
+export const DEFAULT_ADDRESS = {
+  postalCode: null,
+  city: "",
+  street: "",
+  houseNumber: "",
+}
+
+export const DEFAULT_WORK_ADDRESS = {
+  postalCode: null,
+  city: "",
+  street: "",
+  houseNumber: null,
 }
 
 export interface CVData {
@@ -96,7 +108,6 @@ export interface CVData {
   employmentCurrent: EmploymentCurrent
 }
 
-
 export interface UserProfile extends CVData {
   id: string
   email: string
@@ -107,60 +118,60 @@ export const INITIAL_CV_DATA: CVData = {
   personalInfo: {
     firstName: "",
     lastName: "",
-    dateOfBirth: "",
-    gender: "",
-    stateOfOrigin: "",
+    dateOfBirth: null,
+    gender: null,
+    stateOfOrigin: null,
     mobilePhoneNumber: "",
-    maritalStatus: "",
-    numberOfChildren: "",
+    maritalStatus: null,
+    numberOfChildren: null,
   },
   legalStatus: {
     hasCroatianWorkPermit: false,
-    workPermitExpirationDate: "",
+    workPermitExpirationDate: null,
     currentlyEmployedInCroatia: false,
-    dateOfArrivalInCroatia: "",
-    passportExpirationDate: "",
+    dateOfArrivalInCroatia: null,
+    passportExpirationDate: null,
     oib: "",
   },
   jobPreferences: {
-    desiredIndustry: "",
-    desiredPosition: "",
-    expectedMonthlyIncome: "",
+    desiredIndustry: null,
+    desiredPosition: null,
+    expectedMonthlyIncome: null,
     accommodationRequired: false,
     transportationRequired: false,
-    desiredWorkingHoursPerDay: "",
-    desiredWorkingDaysPerMonth: "",
-    yearsOfExperience: "",
-    experienceLevel: "",
+    desiredWorkingHoursPerDay: null,
+    desiredWorkingDaysPerMonth: null,
+    yearsOfExperience: null,
+    experienceLevel: null,
   },
   languages: [
-    { language: "", written: 1, spoken: 1, reading: 1, understanding: 1 },
+    { language: null, written: 1, spoken: 1, reading: 1, understanding: 1 },
   ],
   accommodation: {
     address: {
-      postalCode: "",
+      postalCode: null,
       city: "",
       street: "",
       houseNumber: "",
     },
-    provider: "",
-    type: "",
-    peopleInAccommodation: "",
-    peopleInRoom: "",
+    provider: null,
+    type: null,
+    peopleInAccommodation: null,
+    peopleInRoom: null,
   },
   employmentCurrent: {
-    industry: "",
-    jobTitleInCroatia: "",
+    industry: null,
+    jobTitleInCroatia: null,
     employerName: "",
     employerAddress: "",
     employerContactInfo: "",
     cityOfWork: "",
-    numberOfPreviousEmployersInCroatia: "",
+    numberOfPreviousEmployersInCroatia: null,
     workAddress: {
-      postalCode: "",
+      postalCode: null,
       city: "",
       street: "",
-      houseNumber: "",
+      houseNumber: null,
     },
   },
 }

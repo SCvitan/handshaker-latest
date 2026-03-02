@@ -35,7 +35,9 @@ export function PersonalInfoStep({
   ) => {
     const { name, value } = e.target
     if (name === "numberOfChildren") {
-      onUpdate({ ...data, [name]: value === "" ? "" : Number(value) })
+      onUpdate({ ...data, [name]: value === "" ? null : Number(value) })
+    } else if (name === "dateOfBirth") {
+      onUpdate({ ...data, [name]: value === "" ? null : value })
     } else {
       onUpdate({ ...data, [name]: value })
     }
@@ -68,7 +70,7 @@ export function PersonalInfoStep({
             <Input
               id="firstName"
               name="firstName"
-              placeholder="First name"
+              placeholder="Sime"
               value={data.firstName}
               onChange={handleChange}
             />
@@ -81,7 +83,7 @@ export function PersonalInfoStep({
             <Input
               id="lastName"
               name="lastName"
-              placeholder="Last name"
+              placeholder="Cvitan"
               value={data.lastName}
               onChange={handleChange}
             />
@@ -98,14 +100,14 @@ export function PersonalInfoStep({
               id="dateOfBirth"
               name="dateOfBirth"
               type="date"
-              value={data.dateOfBirth}
+              value={data.dateOfBirth ?? ""}
               onChange={handleChange}
             />
           </div>
           <div className="space-y-2">
             <Label className="flex items-center gap-2">Gender *</Label>
             <Select
-              value={data.gender}
+              value={data.gender ?? ""}
               onValueChange={(v) => handleSelect("gender", v)}
             >
               <SelectTrigger className="w-full">
@@ -123,13 +125,13 @@ export function PersonalInfoStep({
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
+          <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Globe className="size-4 text-muted-foreground" />
               State of Origin
             </Label>
             <Select
-              value={data.stateOfOrigin}
+              value={data.stateOfOrigin ?? ""}
               onValueChange={(v) => handleSelect("stateOfOrigin", v)}
             >
               <SelectTrigger className="w-full">
@@ -153,7 +155,7 @@ export function PersonalInfoStep({
               id="mobilePhoneNumber"
               name="mobilePhoneNumber"
               type="tel"
-              placeholder=""
+              placeholder="0914508995"
               value={data.mobilePhoneNumber}
               onChange={handleChange}
             />
@@ -164,7 +166,7 @@ export function PersonalInfoStep({
           <div className="space-y-2">
             <Label className="flex items-center gap-2">Marital Status</Label>
             <Select
-              value={data.maritalStatus}
+              value={data.maritalStatus ?? ""}
               onValueChange={(v) => handleSelect("maritalStatus", v)}
             >
               <SelectTrigger className="w-full">
@@ -186,8 +188,8 @@ export function PersonalInfoStep({
               name="numberOfChildren"
               type="number"
               min={0}
-              placeholder=""
-              value={data.numberOfChildren}
+              placeholder="0"
+              value={data.numberOfChildren ?? ""}
               onChange={handleChange}
             />
           </div>

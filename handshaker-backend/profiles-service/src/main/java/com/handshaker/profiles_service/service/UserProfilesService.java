@@ -40,9 +40,10 @@ public class UserProfilesService {
             return;
         }
 
-        UserProfile profile = new UserProfile();
-        profile.setId(event.getUserId());
-        profile.setEmail(event.getEmail());
+        UserProfile profile = UserProfile.create(
+                event.getUserId(),
+                event.getEmail()
+        );
 
         repository.save(profile);
         log.info("User service registred user:  {}", profile.getEmail());
@@ -313,10 +314,6 @@ public class UserProfilesService {
 
     private EmploymentCurrentResponse mapEmploymentCurrent(EmploymentCurrent employmentCurrent) {
 
-        if (employmentCurrent == null) {
-            return null;
-        }
-
         AddressResponse addressResponse = null;
 
         if (employmentCurrent.getWorkAddress() != null) {
@@ -341,10 +338,6 @@ public class UserProfilesService {
     }
 
     private AccommodationResponse mapAccommodation(Accommodation acc) {
-
-        if (acc == null) {
-            return null;
-        }
 
         AddressResponse address = null;
         if (acc.getAddress() != null) {
@@ -382,10 +375,6 @@ public class UserProfilesService {
 
     private PersonalInfoResponse mapPersonal(PersonalInfo info, UserProfile profile) {
 
-        if (info == null) {
-            return null;
-        }
-
         return new PersonalInfoResponse(
                 info.getFirstName(),
                 info.getLastName(),
@@ -401,10 +390,6 @@ public class UserProfilesService {
 
     private LegalStatusResponse mapLegal(LegalStatus legal) {
 
-        if (legal == null) {
-            return null;
-        }
-
         return new LegalStatusResponse(
                 legal.isHasCroatianWorkPermit(),
                 legal.getWorkPermitExpirationDate(),
@@ -416,10 +401,6 @@ public class UserProfilesService {
     }
 
     private JobPreferencesResponse  mapPreferences(JobPreferences prefs) {
-
-        if (prefs == null) {
-            return null;
-        }
 
         return new JobPreferencesResponse(
                 prefs.getDesiredIndustry(),

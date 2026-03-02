@@ -18,6 +18,7 @@ import {
   ACCOMMODATION_PROVIDER_OPTIONS,
   ACCOMMODATION_TYPE_OPTIONS,
   PEOPLE_COUNT_OPTIONS,
+  DEFAULT_ADDRESS,
 } from "@/lib/cv-types"
 import { saveAccommodation } from "@/lib/cv-api"
 
@@ -34,11 +35,21 @@ export function AccommodationSection({
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState("")
 
+  const address = data.address ?? DEFAULT_ADDRESS
+
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setData({
-      ...data,
-      address: { ...data.address, [e.target.name]: e.target.value },
-    })
+    const { name, value } = e.target
+    if (name === "postalCode") {
+      setData({
+        ...data,
+        address: { ...address, [name]: value === "" ? null : value },
+      })
+    } else {
+      setData({
+        ...data,
+        address: { ...address, [name]: value },
+      })
+    }
   }
 
   const handleSelect = (name: keyof Accommodation, value: string) => {
@@ -78,7 +89,7 @@ export function AccommodationSection({
             <Input
               id="p-street"
               name="street"
-              value={data.address.street}
+              value={address.street}
               onChange={handleAddressChange}
             />
           </div>
@@ -87,7 +98,7 @@ export function AccommodationSection({
             <Input
               id="p-houseNumber"
               name="houseNumber"
-              value={data.address.houseNumber}
+              value={address.houseNumber}
               onChange={handleAddressChange}
             />
           </div>
@@ -96,7 +107,7 @@ export function AccommodationSection({
             <Input
               id="p-city"
               name="city"
-              value={data.address.city}
+              value={address.city}
               onChange={handleAddressChange}
             />
           </div>
@@ -105,7 +116,7 @@ export function AccommodationSection({
             <Input
               id="p-postalCode"
               name="postalCode"
-              value={data.address.postalCode}
+              value={address.postalCode ?? ""}
               onChange={handleAddressChange}
             />
           </div>
@@ -120,7 +131,7 @@ export function AccommodationSection({
           <div className="space-y-2">
             <Label>Provider</Label>
             <Select
-              value={data.provider}
+              value={data.provider ?? ""}
               onValueChange={(v) => handleSelect("provider", v)}
             >
               <SelectTrigger className="w-full">
@@ -138,7 +149,7 @@ export function AccommodationSection({
           <div className="space-y-2">
             <Label>Type</Label>
             <Select
-              value={data.type}
+              value={data.type ?? ""}
               onValueChange={(v) => handleSelect("type", v)}
             >
               <SelectTrigger className="w-full">
@@ -156,7 +167,7 @@ export function AccommodationSection({
           <div className="space-y-2">
             <Label>People in Accommodation</Label>
             <Select
-              value={data.peopleInAccommodation}
+              value={data.peopleInAccommodation ?? ""}
               onValueChange={(v) =>
                 handleSelect("peopleInAccommodation", v)
               }
@@ -176,7 +187,7 @@ export function AccommodationSection({
           <div className="space-y-2">
             <Label>People in Room</Label>
             <Select
-              value={data.peopleInRoom}
+              value={data.peopleInRoom ?? ""}
               onValueChange={(v) => handleSelect("peopleInRoom", v)}
             >
               <SelectTrigger className="w-full">

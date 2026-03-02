@@ -70,6 +70,7 @@ export default function CompanyProfilePage() {
           setCity(profile.city || "")
           setCountry(profile.country || "")
           setDescription(profile.description || "")
+          setCompanySize(profile.companySize || "")
         })
         .catch((err) => {
           console.error("Failed to fetch company profile:", err)
@@ -105,6 +106,7 @@ export default function CompanyProfilePage() {
       address,
       city,
       country,
+      companySize
     }
 
     try {

@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { EmploymentCurrent } from "@/lib/cv-types"
-import { INDUSTRIES } from "@/lib/cv-types"
+import { INDUSTRIES, DEFAULT_WORK_ADDRESS } from "@/lib/cv-types"
 
 interface EmploymentCurrentStepProps {
   data: EmploymentCurrent
@@ -32,20 +32,32 @@ export function EmploymentCurrentStep({
   onFinish,
   isSaving,
 }: EmploymentCurrentStepProps) {
+  const workAddress = data.workAddress ?? DEFAULT_WORK_ADDRESS
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     if (name === "numberOfPreviousEmployersInCroatia") {
-      onUpdate({ ...data, [name]: value === "" ? "" : Number(value) })
+      onUpdate({ ...data, [name]: value === "" ? null : Number(value) })
+    } else if (name === "jobTitleInCroatia") {
+      onUpdate({ ...data, [name]: value === "" ? null : value })
     } else {
       onUpdate({ ...data, [name]: value })
     }
   }
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate({
-      ...data,
-      workAddress: { ...data.workAddress, [e.target.name]: e.target.value },
-    })
+    const { name, value } = e.target
+    if (name === "postalCode" || name === "houseNumber") {
+      onUpdate({
+        ...data,
+        workAddress: { ...workAddress, [name]: value === "" ? null : value },
+      })
+    } else {
+      onUpdate({
+        ...data,
+        workAddress: { ...workAddress, [name]: value },
+      })
+    }
   }
 
   return (
@@ -69,7 +81,7 @@ export function EmploymentCurrentStep({
             <div className="space-y-2">
               <Label htmlFor="ec-industry">Industry</Label>
               <Select
-                value={data.industry}
+                value={data.industry ?? ""}
                 onValueChange={(v) => onUpdate({ ...data, industry: v })}
               >
                 <SelectTrigger id="ec-industry">
@@ -90,7 +102,7 @@ export function EmploymentCurrentStep({
                 id="ec-jobTitle"
                 name="jobTitleInCroatia"
                 placeholder="Driver"
-                value={data.jobTitleInCroatia}
+                value={data.jobTitleInCroatia ?? ""}
                 onChange={handleChange}
               />
             </div>
@@ -109,7 +121,7 @@ export function EmploymentCurrentStep({
               <Input
                 id="ec-employerAddress"
                 name="employerAddress"
-                placeholder="Street name and number"
+                placeholder="Ulica 3"
                 value={data.employerAddress}
                 onChange={handleChange}
               />
@@ -136,7 +148,7 @@ export function EmploymentCurrentStep({
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="ec-prevEmployers">
-                Number of Employers You Worked For In Croatia
+                Number of Previous Employers in Croatia
               </Label>
               <Input
                 id="ec-prevEmployers"
@@ -144,7 +156,7 @@ export function EmploymentCurrentStep({
                 type="number"
                 min={0}
                 placeholder="0"
-                value={data.numberOfPreviousEmployersInCroatia}
+                value={data.numberOfPreviousEmployersInCroatia ?? ""}
                 onChange={handleChange}
               />
             </div>
@@ -163,7 +175,7 @@ export function EmploymentCurrentStep({
                 id="ec-street"
                 name="street"
                 placeholder="Ilica"
-                value={data.workAddress.street}
+                value={workAddress.street}
                 onChange={handleAddressChange}
               />
             </div>
@@ -173,7 +185,7 @@ export function EmploymentCurrentStep({
                 id="ec-houseNumber"
                 name="houseNumber"
                 placeholder="15A"
-                value={data.workAddress.houseNumber}
+                value={workAddress.houseNumber ?? ""}
                 onChange={handleAddressChange}
               />
             </div>
@@ -183,7 +195,7 @@ export function EmploymentCurrentStep({
                 id="ec-city"
                 name="city"
                 placeholder="Zagreb"
-                value={data.workAddress.city}
+                value={workAddress.city}
                 onChange={handleAddressChange}
               />
             </div>
@@ -193,7 +205,7 @@ export function EmploymentCurrentStep({
                 id="ec-postalCode"
                 name="postalCode"
                 placeholder="10000"
-                value={data.workAddress.postalCode}
+                value={workAddress.postalCode ?? ""}
                 onChange={handleAddressChange}
               />
             </div>

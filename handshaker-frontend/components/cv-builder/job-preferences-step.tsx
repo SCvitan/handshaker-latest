@@ -44,14 +44,14 @@ export function JobPreferencesStep({
     const { name, value } = e.target
     const numericFields = [
       "expectedMonthlyIncome",
-      "workingHoursPerDay",
-      "workingDaysPerMonth",
+      "desiredWorkingHoursPerDay",
+      "desiredWorkingDaysPerMonth",
       "yearsOfExperience",
     ]
     if (numericFields.includes(name)) {
-      onUpdate({ ...data, [name]: value === "" ? "" : Number(value) })
+      onUpdate({ ...data, [name]: value === "" ? null : Number(value) })
     } else {
-      onUpdate({ ...data, [name]: value })
+      onUpdate({ ...data, [name]: value === "" ? null : value })
     }
   }
 
@@ -90,7 +90,7 @@ export function JobPreferencesStep({
               Industry *
             </Label>
             <Select
-              value={data.desiredIndustry}
+              value={data.desiredIndustry ?? ""}
               onValueChange={(v) => handleSelect("desiredIndustry", v)}
             >
               <SelectTrigger id="desiredIndustry">
@@ -114,7 +114,7 @@ export function JobPreferencesStep({
               id="desiredPosition"
               name="desiredPosition"
               placeholder="Driver"
-              value={data.desiredPosition}
+              value={data.desiredPosition ?? ""}
               onChange={handleChange}
             />
           </div>
@@ -134,8 +134,8 @@ export function JobPreferencesStep({
               name="expectedMonthlyIncome"
               type="number"
               min={0}
-              placeholder=""
-              value={data.expectedMonthlyIncome}
+              placeholder="2000"
+              value={data.expectedMonthlyIncome ?? ""}
               onChange={handleChange}
             />
           </div>
@@ -151,8 +151,8 @@ export function JobPreferencesStep({
               name="yearsOfExperience"
               type="number"
               min={0}
-              placeholder=""
-              value={data.yearsOfExperience}
+              placeholder="5"
+              value={data.yearsOfExperience ?? ""}
               onChange={handleChange}
             />
           </div>
@@ -161,7 +161,7 @@ export function JobPreferencesStep({
         <div className="space-y-2">
           <Label className="flex items-center gap-2">Experience Level</Label>
           <Select
-            value={data.experienceLevel}
+            value={data.experienceLevel ?? ""}
             onValueChange={(v) => handleSelect("experienceLevel", v)}
           >
             <SelectTrigger className="w-full">
@@ -193,7 +193,7 @@ export function JobPreferencesStep({
               min={1}
               max={24}
               placeholder="8"
-              value={data.desiredWorkingHoursPerDay}
+              value={data.desiredWorkingHoursPerDay ?? ""}
               onChange={handleChange}
             />
           </div>
@@ -212,7 +212,7 @@ export function JobPreferencesStep({
               min={1}
               max={31}
               placeholder="20"
-              value={data.desiredWorkingDaysPerMonth}
+              value={data.desiredWorkingDaysPerMonth ?? ""}
               onChange={handleChange}
             />
           </div>
@@ -222,17 +222,17 @@ export function JobPreferencesStep({
           <div className="flex items-center justify-between rounded-lg border border-border p-4">
             <div>
               <Label
-                htmlFor="accommodationProvided"
+                htmlFor="accommodationRequired"
                 className="text-sm font-medium"
               >
-                Accommodation Provided
+                Accommodation Required
               </Label>
               <p className="text-xs text-muted-foreground">
-                Employer provides accommodation?
+                Do you require accommodation?
               </p>
             </div>
             <Switch
-              id="accommodationProvided"
+              id="accommodationRequired"
               checked={data.accommodationRequired}
               onCheckedChange={(c) =>
                 handleSwitch("accommodationRequired", c)
@@ -242,17 +242,17 @@ export function JobPreferencesStep({
           <div className="flex items-center justify-between rounded-lg border border-border p-4">
             <div>
               <Label
-                htmlFor="transportationProvided"
+                htmlFor="transportationRequired"
                 className="text-sm font-medium"
               >
-                Transportation Provided
+                Transportation Required
               </Label>
               <p className="text-xs text-muted-foreground">
-                Employer provides transportation?
+                Do you require transportation?
               </p>
             </div>
             <Switch
-              id="transportationProvided"
+              id="transportationRequired"
               checked={data.transportationRequired}
               onCheckedChange={(c) =>
                 handleSwitch("transportationRequired", c)

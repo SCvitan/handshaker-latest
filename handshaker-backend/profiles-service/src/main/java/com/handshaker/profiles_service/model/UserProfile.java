@@ -109,4 +109,49 @@ public class UserProfile {
     public void setEmploymentCurrent(EmploymentCurrent employmentCurrent) {
         this.employmentCurrent = employmentCurrent;
     }
+
+    public static UserProfile create(UUID id, String email) {
+
+        UserProfile profile = new UserProfile();
+        profile.setId(id);
+        profile.setEmail(email);
+
+        // Personal
+        PersonalInfo personal = new PersonalInfo();
+        personal.setProfile(profile);
+        profile.setPersonalInfo(personal);
+
+        // Legal
+        LegalStatus legal = new LegalStatus();
+        legal.setProfile(profile);
+        profile.setLegalStatus(legal);
+
+        // Job Preferences
+        JobPreferences prefs = new JobPreferences();
+        prefs.setProfile(profile);
+        profile.setJobPreferences(prefs);
+
+        // Accommodation
+        Accommodation accommodation = new Accommodation();
+        accommodation.setProfile(profile);
+
+        Address accommodationAddress = new Address();
+        accommodation.setAddress(accommodationAddress);
+
+        profile.setAccommodation(accommodation);
+
+        // Employment
+        EmploymentCurrent employment = new EmploymentCurrent();
+        employment.setId(id); // required for @MapsId
+        employment.setProfile(profile);
+
+        Address workAddress = new Address();
+        employment.setWorkAddress(workAddress);
+
+        profile.setEmploymentCurrent(employment);
+
+        profile.setLanguageSkills(new ArrayList<>());
+
+        return profile;
+    }
 }

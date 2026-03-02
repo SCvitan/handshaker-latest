@@ -33,7 +33,7 @@ export function LanguagesSection({
   const addLanguage = () => {
     setData([
       ...data,
-      { language: "", written: 1, spoken: 1, reading: 1, understanding: 1 },
+      { language: null, written: 1, spoken: 1, reading: 1, understanding: 1 },
     ])
   }
 
@@ -108,7 +108,7 @@ export function LanguagesSection({
             <div className="space-y-2">
               <Label>Language</Label>
               <Select
-                value={lang.language}
+                value={lang.language ?? ""}
                 onValueChange={(v) => updateLanguage(index, "language", v)}
               >
                 <SelectTrigger className="w-full">

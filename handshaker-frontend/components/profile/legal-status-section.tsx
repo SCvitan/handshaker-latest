@@ -24,7 +24,13 @@ export function LegalStatusSection({
   const [message, setMessage] = useState("")
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setData({ ...data, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    const dateFields = ["workPermitExpirationDate", "dateOfArrivalInCroatia", "passportExpirationDate"]
+    if (dateFields.includes(name)) {
+      setData({ ...data, [name]: value === "" ? null : value })
+    } else {
+      setData({ ...data, [name]: value })
+    }
   }
 
   const handleSwitch = (name: keyof LegalStatus, checked: boolean) => {
@@ -50,7 +56,7 @@ export function LegalStatusSection({
     <div className="space-y-4">
       <div className="flex items-center justify-between rounded-lg border border-border p-4">
         <div>
-          <Label htmlFor="p-hasWorkPermit" className="text-sm font-medium">
+          <Label htmlFor="p-hasCroatianWorkPermit" className="text-sm font-medium">
             Has Work Permit
           </Label>
           <p className="text-xs text-muted-foreground">
@@ -58,7 +64,7 @@ export function LegalStatusSection({
           </p>
         </div>
         <Switch
-          id="p-hasWorkPermit"
+          id="p-hasCroatianWorkPermit"
           checked={data.hasCroatianWorkPermit}
           onCheckedChange={(c) => handleSwitch("hasCroatianWorkPermit", c)}
         />
@@ -73,7 +79,7 @@ export function LegalStatusSection({
             id="p-workPermitExp"
             name="workPermitExpirationDate"
             type="date"
-            value={data.workPermitExpirationDate}
+            value={data.workPermitExpirationDate ?? ""}
             onChange={handleChange}
           />
         </div>
@@ -107,7 +113,7 @@ export function LegalStatusSection({
             id="p-arrivalDate"
             name="dateOfArrivalInCroatia"
             type="date"
-            value={data.dateOfArrivalInCroatia}
+            value={data.dateOfArrivalInCroatia ?? ""}
             onChange={handleChange}
           />
         </div>
@@ -117,7 +123,7 @@ export function LegalStatusSection({
             id="p-passportExp"
             name="passportExpirationDate"
             type="date"
-            value={data.passportExpirationDate}
+            value={data.passportExpirationDate ?? ""}
             onChange={handleChange}
           />
         </div>
