@@ -24,6 +24,7 @@ public class JobPreferences {
     private String desiredPosition;
 
     private BigDecimal expectedMonthlyIncome;
+    private BigDecimal expectedHourlyPay;
 
     private boolean accommodationRequired;
     private boolean transportationRequired;
@@ -124,5 +125,13 @@ public class JobPreferences {
 
     public void setExperienceLevel(ExperienceLevel experienceLevel) {
         this.experienceLevel = experienceLevel;
+    }
+
+    public BigDecimal getExpectedHourlyPay() {
+        return expectedHourlyPay;
+    }
+
+    public void setExpectedHourlyPay(BigDecimal expectedHourlyPay) {
+        this.expectedHourlyPay = expectedHourlyPay;
     }
 }

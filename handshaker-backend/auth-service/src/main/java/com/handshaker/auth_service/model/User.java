@@ -2,6 +2,7 @@ package com.handshaker.auth_service.model;
 
 import jakarta.persistence.*;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -20,6 +21,10 @@ public class User {
 
     @Column(nullable = false)
     private String role;
+
+    private boolean emailVerified = false;
+    private String verificationToken;
+    private Instant verificationTokenExpiry;
 
     protected User(){}
 
@@ -44,5 +49,29 @@ public class User {
 
     public String getRole() {
         return role;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public String getVerificationToken() {
+        return verificationToken;
+    }
+
+    public Instant getVerificationTokenExpiry() {
+        return verificationTokenExpiry;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
+    }
+
+    public void setVerificationTokenExpiry(Instant verificationTokenExpiry) {
+        this.verificationTokenExpiry = verificationTokenExpiry;
     }
 }

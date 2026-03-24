@@ -12,12 +12,15 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ArrowRight, Home, User, Phone, Globe, Calendar } from "lucide-react"
+import { ProfilePictureUpload } from "@/components/profile-picture-upload"
 import type { PersonalInfo } from "@/lib/cv-types"
 import { GENDER_OPTIONS, MARITAL_STATUS_OPTIONS, COUNTRIES } from "@/lib/cv-types"
 
 interface PersonalInfoStepProps {
   data: PersonalInfo
+  profileImageUrl: string | null
   onUpdate: (data: PersonalInfo) => void
+  onImageUploaded: (url: string | null) => void
   onNext: () => void
   onSaveAndHome: () => void
   isSaving: boolean
@@ -25,7 +28,9 @@ interface PersonalInfoStepProps {
 
 export function PersonalInfoStep({
   data,
+  profileImageUrl,
   onUpdate,
+  onImageUploaded,
   onNext,
   onSaveAndHome,
   isSaving,
@@ -61,6 +66,20 @@ export function PersonalInfoStep({
       </div>
 
       <div className="grid gap-4">
+        {/* Profile Picture */}
+        <div className="flex justify-center pb-2">
+          <ProfilePictureUpload
+            currentUrl={profileImageUrl}
+            onUploaded={(url) => onImageUploaded(url)}
+            onRemove={() => onImageUploaded(null)}
+            initials={
+              data.firstName && data.lastName
+                ? `${data.firstName[0]}${data.lastName[0]}`.toUpperCase()
+                : ""
+            }
+          />
+        </div>
+
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="firstName" className="flex items-center gap-2">

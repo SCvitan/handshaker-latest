@@ -14,24 +14,25 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class UserProfilesService {
 
     private final UserProfileRepository repository;
     private final ProfileCompletenessCalculator completenessCalculator;
+    private final FileStorageService fileStorageService;
     private static final Logger log = LoggerFactory.getLogger(UserProfilesService.class);
 
-    public UserProfilesService(UserProfileRepository repository, ProfileCompletenessCalculator completenessCalculator) {
+    public UserProfilesService(UserProfileRepository repository, ProfileCompletenessCalculator completenessCalculator, FileStorageService fileStorageService) {
         this.repository = repository;
         this.completenessCalculator = completenessCalculator;
+        this.fileStorageService = fileStorageService;
     }
-
 
     @RabbitListener(queues = RabbitConfig.USER_REGISTERED_QUEUE)
     public void handleUserRegistered(UserRegisteredEvent event){
@@ -80,6 +81,7 @@ public class UserProfilesService {
         return new UserProfileResponse(
                 profile.getId(),
                 profile.getEmail(),
+                profile.getProfileImageUrl(),
                 mapPersonal(profile.getPersonalInfo(), profile),
                 mapLegal(profile.getLegalStatus()),
                 mapPreferences(profile.getJobPreferences()),
@@ -147,6 +149,7 @@ public class UserProfilesService {
         prefs.setDesiredIndustry(req.desiredIndustry());
         prefs.setDesiredPosition(req.desiredPosition());
         prefs.setExpectedMonthlyIncome(req.expectedMonthlyIncome());
+        prefs.setExpectedHourlyPay(req.expectedHourlyPay());
         prefs.setAccommodationRequired(req.accommodationRequired());
         prefs.setTransportationRequired(req.transportationRequired());
         prefs.setDesiredWorkingHoursPerDay(req.desiredWorkingHoursPerDay());
@@ -261,11 +264,25 @@ public class UserProfilesService {
         return profiles.map(this::mapToUserProfileResponse);
     }
 
+    @Transactional
+    public String uploadProfileImage(UUID userId, MultipartFile file) {
+        log.info("File reached the service: " + file);
+
+        UserProfile profile = getProfile(userId);
+
+        log.info("Trying to upload a picture to R2");
+        String url = fileStorageService.uploadProfileImage(userId, file);
+        profile.setProfileImageUrl(url);
+
+        return url;
+    }
+
     private UserProfileResponse mapToUserProfileResponse(UserProfile profile) {
 
         return new UserProfileResponse(
                 profile.getId(),
                 profile.getEmail(),
+                profile.getProfileImageUrl(),
 
                 mapPersonal(profile.getPersonalInfo(), profile),
                 mapLegal(profile.getLegalStatus()),
@@ -406,6 +423,7 @@ public class UserProfilesService {
                 prefs.getDesiredIndustry(),
                 prefs.getDesiredPosition(),
                 prefs.getExpectedMonthlyIncome(),
+                prefs.getExpectedHourlyPay(),
                 prefs.isAccommodationRequired(),
                 prefs.isTransportationRequired(),
                 prefs.getDesiredWorkingHoursPerDay(),

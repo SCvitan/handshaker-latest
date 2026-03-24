@@ -2,6 +2,10 @@ server:
   port: 8083
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
   security:
     user:
       name: disabled
@@ -48,3 +52,10 @@ management:
 
 jwt:
   secret: ${JWT_SECRET}
+
+r2:
+  endpoint: https://4b597c2f15e13dbc1fa64fa49c74c8db.r2.cloudflarestorage.com/handshaker
+  accessKey: 6d97fe8b46355c20f939c6e59d244b0e
+  secretKey: 5fdb5621c583e5098fcd503accae6f2bd195da1435ebbbfa90f959870be18afc
+  bucket: handshaker
+  public-url: https://pub-1ecf35e4d57e4b6ba7c86d6a38c33baf.r2.dev

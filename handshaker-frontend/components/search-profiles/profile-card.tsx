@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { MapPin, Briefcase, Languages, Clock, Shield } from "lucide-react"
 import type { UserProfile } from "@/lib/cv-types"
 
@@ -26,6 +27,10 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
   const completion = Math.round((profile.profileCompletion || 0) * 100)
   const age = personalInfo.dateOfBirth ? calculateAge(personalInfo.dateOfBirth) : null
   const city = accommodation.address?.city || employmentCurrent?.cityOfWork || ""
+  const initials =
+    personalInfo.firstName && personalInfo.lastName
+      ? `${personalInfo.firstName[0]}${personalInfo.lastName[0]}`.toUpperCase()
+      : "?"
 
   return (
     <Card
@@ -34,11 +39,34 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
     >
       <CardContent className="p-5">
         {/* Header */}
-        <div className="mb-3 flex items-start justify-between">
-          <div>
-            <h3 className="font-semibold text-foreground">
-              {personalInfo.firstName} {personalInfo.lastName}
-            </h3>
+        <div className="mb-3 flex items-start gap-3">
+          <Avatar className="size-11 shrink-0">
+            <AvatarImage
+              src={profile.profileImageUrl ?? undefined}
+              alt={`${personalInfo.firstName} ${personalInfo.lastName}`}
+            />
+            <AvatarFallback className="text-sm font-medium">{initials}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-semibold text-foreground">
+                {personalInfo.firstName} {personalInfo.lastName}
+              </h3>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <span
+                  className={`text-xs font-medium ${
+                    completion >= 80
+                      ? "text-green-600"
+                      : completion >= 50
+                        ? "text-amber-600"
+                        : "text-red-500"
+                  }`}
+                >
+                  {completion}%
+                </span>
+                <Progress value={completion} className="h-1.5 w-16" />
+              </div>
+            </div>
             <p className="text-sm text-muted-foreground">
               {age !== null && <span>{age} yrs</span>}
               {age !== null && personalInfo.gender && <span> / </span>}
@@ -47,20 +75,6 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
               )}
               {personalInfo.stateOfOrigin && <span> / {personalInfo.stateOfOrigin}</span>}
             </p>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <span
-              className={`text-xs font-medium ${
-                completion >= 80
-                  ? "text-green-600"
-                  : completion >= 50
-                    ? "text-amber-600"
-                    : "text-red-500"
-              }`}
-            >
-              {completion}%
-            </span>
-            <Progress value={completion} className="h-1.5 w-16" />
           </div>
         </div>
 

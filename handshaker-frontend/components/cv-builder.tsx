@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useLanguage } from "@/components/language-provider"
 import { StepIndicator } from "./cv-builder/step-indicator"
 import { PersonalInfoStep } from "./cv-builder/personal-info-step"
 import { LegalStatusStep } from "./cv-builder/legal-status-step"
@@ -12,6 +13,7 @@ import { EmploymentCurrentStep } from "./cv-builder/employment-current-step"
 import type { CVData } from "@/lib/cv-types"
 import { INITIAL_CV_DATA } from "@/lib/cv-types"
 import {
+  fetchProfile,
   savePersonalInfo,
   saveLegalStatus,
   saveJobPreferences,
@@ -19,21 +21,55 @@ import {
   saveAccommodation,
   saveEmploymentCurrent,
 } from "@/lib/cv-api"
+import { Loader2 } from "lucide-react"
 
-const STEPS = [
-  { id: 1, name: "Personal Info" },
-  { id: 2, name: "Legal Status" },
-  { id: 3, name: "Job Preferences" },
-  { id: 4, name: "Languages" },
-  { id: 5, name: "Accommodation" },
-  { id: 6, name: "Current Work" },
-]
+const STEP_KEYS = [
+  "personalInfo",
+  "legalStatus",
+  "jobPreferences",
+  "languages",
+  "accommodation",
+  "currentWork",
+] as const
 
 export function CVBuilder() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [currentStep, setCurrentStep] = useState(1)
   const [cvData, setCVData] = useState<CVData>(INITIAL_CV_DATA)
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Load existing profile data on mount
+  useEffect(() => {
+    async function loadExistingProfile() {
+      try {
+        const profile = await fetchProfile()
+        if (profile) {
+          setCVData({
+            personalInfo: profile.personalInfo,
+            legalStatus: profile.legalStatus,
+            jobPreferences: profile.jobPreferences,
+            languages: profile.languages.length > 0 ? profile.languages : INITIAL_CV_DATA.languages,
+            accommodation: profile.accommodation,
+            employmentCurrent: profile.employmentCurrent,
+          })
+          setProfileImageUrl(profile.profileImageUrl)
+        }
+      } catch {
+        // New user, use initial data
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadExistingProfile()
+  }, [])
+
+  const STEPS = STEP_KEYS.map((key, i) => ({
+    id: i + 1,
+    name: t(`cvBuilder.steps.${key}`),
+  }))
 
   const updatePersonalInfo = (data: CVData["personalInfo"]) => {
     setCVData((prev) => ({ ...prev, personalInfo: data }))
@@ -118,6 +154,14 @@ export function CVBuilder() {
     router.push("/")
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-lg">
       <div className="border-b border-border bg-muted/30 p-6">
@@ -132,7 +176,9 @@ export function CVBuilder() {
         {currentStep === 1 && (
           <PersonalInfoStep
             data={cvData.personalInfo}
+            profileImageUrl={profileImageUrl}
             onUpdate={updatePersonalInfo}
+            onImageUploaded={setProfileImageUrl}
             onNext={nextStep}
             onSaveAndHome={handleSaveAndHome}
             isSaving={isSaving}

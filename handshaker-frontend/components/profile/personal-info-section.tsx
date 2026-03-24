@@ -13,20 +13,26 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Save, Loader2 } from "lucide-react"
+import { ProfilePictureUpload } from "@/components/profile-picture-upload"
 import type { PersonalInfo } from "@/lib/cv-types"
 import { GENDER_OPTIONS, MARITAL_STATUS_OPTIONS, COUNTRIES } from "@/lib/cv-types"
 import { savePersonalInfo } from "@/lib/cv-api"
 
 interface PersonalInfoSectionProps {
   data: PersonalInfo
+  profileImageUrl: string | null
   onSaved: (data: PersonalInfo) => void
+  onImageUploaded: (url: string | null) => void
 }
 
 export function PersonalInfoSection({
   data: initialData,
+  profileImageUrl,
   onSaved,
+  onImageUploaded,
 }: PersonalInfoSectionProps) {
   const [data, setData] = useState<PersonalInfo>(initialData)
+  const [imageUrl, setImageUrl] = useState<string | null>(profileImageUrl)
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState("")
 
@@ -62,6 +68,26 @@ export function PersonalInfoSection({
 
   return (
     <div className="space-y-4">
+      {/* Profile Picture */}
+      <div className="flex justify-center pb-2">
+        <ProfilePictureUpload
+          currentUrl={imageUrl}
+          onUploaded={(url) => {
+            setImageUrl(url)
+            onImageUploaded(url)
+          }}
+          onRemove={() => {
+            setImageUrl(null)
+            onImageUploaded(null)
+          }}
+          initials={
+            data.firstName && data.lastName
+              ? `${data.firstName[0]}${data.lastName[0]}`.toUpperCase()
+              : ""
+          }
+        />
+      </div>
+
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="p-firstName">First Name</Label>

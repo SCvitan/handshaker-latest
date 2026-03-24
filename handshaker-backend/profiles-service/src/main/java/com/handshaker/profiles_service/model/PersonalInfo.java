@@ -36,7 +36,6 @@ public class PersonalInfo {
 
     private Integer numberOfChildren;
 
-
     public PersonalInfo() {}
 
     public UUID getId() {
@@ -118,4 +117,5 @@ public class PersonalInfo {
     public void setNumberOfChildren(Integer numberOfChildren) {
         this.numberOfChildren = numberOfChildren;
     }
+
 }

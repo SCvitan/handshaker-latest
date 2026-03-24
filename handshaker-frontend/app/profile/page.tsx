@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
+import { useLanguage } from "@/components/language-provider"
 import { ProfileCompletionBar } from "@/components/profile/completion-bar"
 import { ProfileSection } from "@/components/profile/profile-section"
 import { PersonalInfoSection } from "@/components/profile/personal-info-section"
@@ -26,6 +27,7 @@ import {
 
 export default function ProfilePage() {
   const { user, isLoading: authLoading } = useAuth()
+  const { t } = useLanguage()
   const router = useRouter()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -52,7 +54,7 @@ export default function ProfilePage() {
       const data = await fetchProfile()
       setProfile(data)
     } catch (err) {
-      setError("Failed to load profile. Please try again.")
+      setError(t("profile.failedToLoad"))
     } finally {
       setIsLoading(false)
     }
@@ -73,7 +75,7 @@ export default function ProfilePage() {
       <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-background">
         <div className="flex items-center gap-3 text-muted-foreground">
           <Loader2 className="size-5 animate-spin" />
-          <span>Loading profile...</span>
+          <span>{t("profile.loadingProfile")}</span>
         </div>
       </main>
     )
@@ -88,7 +90,7 @@ export default function ProfilePage() {
             onClick={loadProfile}
             className="text-sm text-primary underline-offset-4 hover:underline"
           >
-            Try again
+            {t("profile.tryAgain")}
           </button>
         </div>
       </main>
@@ -100,38 +102,38 @@ export default function ProfilePage() {
   const sections = [
     {
       id: "personal",
-      title: "Personal Information",
-      description: "Name, date of birth, contact details",
+      title: t("profile.sections.personalInfo"),
+      description: t("profile.sections.personalInfoDesc"),
       icon: User,
     },
     {
       id: "legal",
-      title: "Legal Status",
-      description: "Work permit, employment, identification",
+      title: t("profile.sections.legalStatus"),
+      description: t("profile.sections.legalStatusDesc"),
       icon: Shield,
     },
     {
       id: "job",
-      title: "Job Preferences",
-      description: "Industry, position, work conditions",
+      title: t("profile.sections.jobPreferences"),
+      description: t("profile.sections.jobPreferencesDesc"),
       icon: Briefcase,
     },
     {
       id: "languages",
-      title: "Languages",
-      description: "Language proficiency ratings",
+      title: t("profile.sections.languages"),
+      description: t("profile.sections.languagesDesc"),
       icon: Languages,
     },
     {
       id: "accommodation",
-      title: "Accommodation",
-      description: "Address and living arrangements",
+      title: t("profile.sections.accommodation"),
+      description: t("profile.sections.accommodationDesc"),
       icon: Building,
     },
     {
       id: "employment",
-      title: "Current Work Details",
-      description: "Current employer and work address",
+      title: t("profile.sections.employment"),
+      description: t("profile.sections.employmentDesc"),
       icon: HardHat,
     },
   ]
@@ -141,7 +143,7 @@ export default function ProfilePage() {
       <div className="mx-auto max-w-3xl space-y-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground text-balance">
-            My Profile
+            {t("profile.title")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {profile.email}
@@ -163,8 +165,12 @@ export default function ProfilePage() {
               {section.id === "personal" && (
                 <PersonalInfoSection
                   data={profile.personalInfo || INITIAL_CV_DATA.personalInfo}
+                  profileImageUrl={profile.profileImageUrl}
                   onSaved={(data) =>
                     handleProfileUpdate({ personalInfo: data })
+                  }
+                  onImageUploaded={(url) =>
+                    handleProfileUpdate({ profileImageUrl: url })
                   }
                 />
               )}

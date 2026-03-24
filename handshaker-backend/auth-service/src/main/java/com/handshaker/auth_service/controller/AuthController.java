@@ -6,7 +6,11 @@ import com.handshaker.auth_service.dto.RegisterRequest;
 import com.handshaker.auth_service.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.util.UUID;
 
 
 @RestController
@@ -33,6 +37,18 @@ public class AuthController {
     public ResponseEntity<Void> logout(HttpServletResponse response) {
         authService.logout(response);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<AuthResponse> getMe(Authentication auth) {
+        UUID userId = (UUID) auth.getPrincipal();
+        return ResponseEntity.ok(authService.getMe(userId));
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<?> verify(@RequestParam String token, HttpServletResponse response) throws IOException {
+       authService.verify(token, response);
+       return ResponseEntity.ok("Email verified successfully");
     }
 
 }

@@ -30,11 +30,9 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
+        String token = resolveToken(request);
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-
+        if (token != null) {
             try {
                 UUID userId = jwtUtil.validateAndGetUserId(token);
 
@@ -53,7 +51,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
             } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid or expired JWT token");
                 return;
             }
         }
@@ -61,4 +58,23 @@ public class JwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    private String resolveToken(HttpServletRequest request) {
+
+        // ✅ 1. Try cookie first
+        if (request.getCookies() != null) {
+            for (var cookie : request.getCookies()) {
+                if ("jwt".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        // ✅ 2. Fallback to Authorization header
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+
+        return null;
+    }
 }

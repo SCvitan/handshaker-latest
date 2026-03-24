@@ -5,6 +5,7 @@ import React from "react"
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
+import { useLanguage } from "@/components/language-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,15 +16,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { FileText, Loader2, User, Building2 } from "lucide-react"
+import { FileText, Loader2, User, Building2, ArrowLeft, MailCheck } from "lucide-react"
 import type { UserRole } from "@/lib/auth"
+import { requestPasswordReset } from "@/lib/auth"
 
 export default function AuthPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { user, login, register } = useAuth()
+  const { t } = useLanguage()
 
-  const [mode, setMode] = useState<"login" | "register">(
+  const [mode, setMode] = useState<"login" | "register" | "forgot-password">(
     searchParams.get("mode") === "register" ? "register" : "login"
   )
   const [email, setEmail] = useState("")
@@ -31,11 +34,10 @@ export default function AuthPage() {
   const [role, setRole] = useState<UserRole>("USER")
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+  const [registerSent, setRegisterSent] = useState(false)
 
   useEffect(() => {
-    // Only redirect if user lands on auth page while already logged in
-    // (e.g. typing /auth in URL while logged in). Skip during form submission
-    // to let handleSubmit control the redirect destination.
     if (user && !isSubmitting) {
       router.push("/")
     }
@@ -57,14 +59,17 @@ export default function AuthPage() {
       if (mode === "login") {
         await login(email, password)
         router.push("/")
-      } else {
+      } else if (mode === "register") {
         await register(email, password, role)
-        router.push(role === "USER" ? "/cv-builder" : "/company-profile")
+        setRegisterSent(true)
+        setIsSubmitting(false)
+      } else if (mode === "forgot-password") {
+        await requestPasswordReset(email)
+        setResetSent(true)
+        setIsSubmitting(false)
       }
-      // Do NOT reset isSubmitting on success — keep it true so the
-      // useEffect guard stays active until navigation completes.
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
+      setError(err instanceof Error ? err.message : t("common.error"))
       setIsSubmitting(false)
     }
   }
@@ -76,27 +81,80 @@ export default function AuthPage() {
     router.replace(`/auth?mode=${newMode}`)
   }
 
+  const goToForgotPassword = () => {
+    setMode("forgot-password")
+    setError("")
+    setResetSent(false)
+  }
+
+  const goBackToLogin = () => {
+    setMode("login")
+    setError("")
+    setResetSent(false)
+    router.replace("/auth?mode=login")
+  }
+
   return (
     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <FileText className="size-5" />
+            {(mode === "forgot-password" && resetSent) || registerSent
+              ? <MailCheck className="size-5" />
+              : <FileText className="size-5" />
+            }
           </div>
           <CardTitle className="text-2xl">
-            {mode === "login" ? "Welcome back" : "Create an account"}
+            {registerSent
+              ? t("auth.checkYourEmail")
+              : mode === "login"
+              ? t("auth.welcomeBack")
+              : mode === "register"
+              ? t("auth.createAccount")
+              : resetSent
+              ? t("auth.checkYourEmail")
+              : t("auth.resetPassword")}
           </CardTitle>
           <CardDescription>
-            {mode === "login"
-              ? "Log in to your CVBuilder account"
-              : "Sign up to start building your professional CV"}
+            {registerSent
+              ? t("auth.verifyEmailSent") + " " + email
+              : mode === "login"
+              ? t("auth.loginSubtitle")
+              : mode === "register"
+              ? t("auth.registerSubtitle")
+              : resetSent
+              ? t("auth.resetEmailSent") + " " + email
+              : t("auth.resetSubtitle")}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Register verification email sent */}
+          {registerSent ? (
+            <div className="flex flex-col gap-4">
+              <p className="text-center text-sm text-muted-foreground">
+                {t("auth.verifyEmailHint")}
+              </p>
+              <Button variant="outline" className="w-full" onClick={() => {
+                setRegisterSent(false)
+                setMode("login")
+                router.replace("/auth?mode=login")
+              }}>
+                <ArrowLeft className="mr-2 size-4" />
+                {t("auth.backToLogin")}
+              </Button>
+            </div>
+          ) : mode === "forgot-password" && resetSent ? (
+            <div className="flex flex-col gap-4">
+              <Button variant="outline" className="w-full" onClick={goBackToLogin}>
+                <ArrowLeft className="mr-2 size-4" />
+                {t("auth.backToLogin")}
+              </Button>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {mode === "register" && (
               <div className="flex flex-col gap-2">
-                <Label className="text-sm font-medium">Account type</Label>
+                <Label className="text-sm font-medium">{t("auth.accountType")}</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -108,9 +166,9 @@ export default function AuthPage() {
                     }`}
                   >
                     <User className="size-6" />
-                    <span className="text-sm font-medium">User</span>
+                    <span className="text-sm font-medium">{t("auth.user")}</span>
                     <span className="text-xs text-muted-foreground">
-                      Personal account
+                      {t("auth.personalAccount")}
                     </span>
                   </button>
                   <button
@@ -123,9 +181,9 @@ export default function AuthPage() {
                     }`}
                   >
                     <Building2 className="size-6" />
-                    <span className="text-sm font-medium">Company</span>
+                    <span className="text-sm font-medium">{t("auth.company")}</span>
                     <span className="text-xs text-muted-foreground">
-                      Business account
+                      {t("auth.businessAccount")}
                     </span>
                   </button>
                 </div>
@@ -133,7 +191,7 @@ export default function AuthPage() {
             )}
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -145,18 +203,31 @@ export default function AuthPage() {
               />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
-              />
-            </div>
+            {mode !== "forgot-password" && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">{t("auth.password")}</Label>
+                  {mode === "login" && (
+                    <button
+                      type="button"
+                      onClick={goToForgotPassword}
+                      className="text-xs text-primary underline-offset-4 hover:underline"
+                    >
+                      {t("auth.forgotPassword")}
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                />
+              </div>
+            )}
 
             {error && (
               <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -168,41 +239,57 @@ export default function AuthPage() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" />
-                  {mode === "login" ? "Logging in..." : "Creating account..."}
+                  {mode === "login"
+                    ? t("auth.loggingIn")
+                    : mode === "register"
+                    ? t("auth.creatingAccount")
+                    : t("auth.sendingReset")}
                 </>
               ) : mode === "login" ? (
-                "Log in"
+                t("nav.logIn")
+              ) : mode === "register" ? (
+                t("auth.createAccount")
               ) : (
-                "Create account"
+                t("auth.sendResetLink")
               )}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">
               {mode === "login" ? (
                 <>
-                  {"Don't have an account? "}
+                  {t("auth.noAccount") + " "}
                   <button
                     type="button"
                     onClick={toggleMode}
                     className="font-medium text-primary underline-offset-4 hover:underline"
                   >
-                    Register
+                    {t("nav.register")}
+                  </button>
+                </>
+              ) : mode === "register" ? (
+                <>
+                  {t("auth.alreadyHaveAccount") + " "}
+                  <button
+                    type="button"
+                    onClick={toggleMode}
+                    className="font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    {t("nav.logIn")}
                   </button>
                 </>
               ) : (
-                <>
-                  {"Already have an account? "}
-                  <button
-                    type="button"
-                    onClick={toggleMode}
-                    className="font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    Log in
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={goBackToLogin}
+                  className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  <ArrowLeft className="size-3" />
+                  {t("auth.backToLogin")}
+                </button>
               )}
             </p>
           </form>
+          )}
         </CardContent>
       </Card>
     </main>

@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Save, Loader2 } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { JobPreferences } from "@/lib/cv-types"
 import { EXPERIENCE_LEVEL_OPTIONS, INDUSTRIES } from "@/lib/cv-types"
 import { saveJobPreferences } from "@/lib/cv-api"
@@ -30,11 +31,18 @@ export function JobPreferencesSection({
   const [data, setData] = useState<JobPreferences>(initialData)
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState("")
+  
+  // Determine salary type: "monthly" if monthly has value, "hourly" if hourly has value, default to "monthly"
+  const [salaryType, setSalaryType] = useState<"monthly" | "hourly">(() => {
+    if (initialData.expectedHourlyPay !== null) return "hourly"
+    return "monthly"
+  })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     const numericFields = [
       "expectedMonthlyIncome",
+      "expectedHourlyPay",
       "desiredWorkingHoursPerDay",
       "desiredWorkingDaysPerMonth",
       "yearsOfExperience",
@@ -109,16 +117,62 @@ export function JobPreferencesSection({
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="p-income">Expected Monthly Income (EUR)</Label>
-          <Input
-            id="p-income"
-            name="expectedMonthlyIncome"
-            type="number"
-            min={0}
-            value={data.expectedMonthlyIncome ?? ""}
-            onChange={handleChange}
-          />
+          <Label>Salary Type</Label>
+          <RadioGroup
+            value={salaryType}
+            onValueChange={(value: "monthly" | "hourly") => {
+              setSalaryType(value)
+              if (value === "monthly") {
+                setData({ ...data, expectedHourlyPay: null })
+              } else {
+                setData({ ...data, expectedMonthlyIncome: null })
+              }
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="monthly" id="p-salary-monthly" />
+              <Label htmlFor="p-salary-monthly" className="font-normal cursor-pointer">
+                Monthly
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="hourly" id="p-salary-hourly" />
+              <Label htmlFor="p-salary-hourly" className="font-normal cursor-pointer">
+                Hourly
+              </Label>
+            </div>
+          </RadioGroup>
         </div>
+        <div className="space-y-2">
+          {salaryType === "monthly" ? (
+            <>
+              <Label htmlFor="p-income">Expected Monthly Income (EUR)</Label>
+              <Input
+                id="p-income"
+                name="expectedMonthlyIncome"
+                type="number"
+                min={0}
+                value={data.expectedMonthlyIncome ?? ""}
+                onChange={handleChange}
+              />
+            </>
+          ) : (
+            <>
+              <Label htmlFor="p-hourly">Expected Hourly Pay (EUR)</Label>
+              <Input
+                id="p-hourly"
+                name="expectedHourlyPay"
+                type="number"
+                min={0}
+                value={data.expectedHourlyPay ?? ""}
+                onChange={handleChange}
+              />
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="p-yearsExp">Years of Experience</Label>
           <Input

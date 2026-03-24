@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,6 +21,7 @@ import {
   DollarSign,
   Clock,
 } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { JobPreferences } from "@/lib/cv-types"
 import { EXPERIENCE_LEVEL_OPTIONS, INDUSTRIES } from "@/lib/cv-types"
 
@@ -40,10 +42,26 @@ export function JobPreferencesStep({
   onSaveAndHome,
   isSaving,
 }: JobPreferencesStepProps) {
+  // Determine initial salary type based on data
+  const [salaryType, setSalaryType] = useState<"monthly" | "hourly">(() => {
+    if (data.expectedHourlyPay !== null) return "hourly"
+    return "monthly"
+  })
+
+  // Sync salaryType if data changes externally (e.g., profile load)
+  useEffect(() => {
+    if (data.expectedHourlyPay !== null) {
+      setSalaryType("hourly")
+    } else {
+      setSalaryType("monthly")
+    }
+  }, [data.expectedHourlyPay, data.expectedMonthlyIncome])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     const numericFields = [
       "expectedMonthlyIncome",
+      "expectedHourlyPay",
       "desiredWorkingHoursPerDay",
       "desiredWorkingDaysPerMonth",
       "yearsOfExperience",
@@ -122,39 +140,69 @@ export function JobPreferencesStep({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label
-              htmlFor="expectedMonthlyIncome"
-              className="flex items-center gap-2"
-            >
+            <Label className="flex items-center gap-2">
               <DollarSign className="size-4 text-muted-foreground" />
-              Expected Monthly Income (EUR)
+              Salary Type
             </Label>
-            <Input
-              id="expectedMonthlyIncome"
-              name="expectedMonthlyIncome"
-              type="number"
-              min={0}
-              placeholder="2000"
-              value={data.expectedMonthlyIncome ?? ""}
-              onChange={handleChange}
-            />
+            <RadioGroup
+              value={salaryType}
+              onValueChange={(value: "monthly" | "hourly") => {
+                setSalaryType(value)
+                if (value === "monthly") {
+                  onUpdate({ ...data, expectedHourlyPay: null })
+                } else {
+                  onUpdate({ ...data, expectedMonthlyIncome: null })
+                }
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="monthly" id="salary-monthly" />
+                <Label htmlFor="salary-monthly" className="font-normal cursor-pointer">
+                  Monthly
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="hourly" id="salary-hourly" />
+                <Label htmlFor="salary-hourly" className="font-normal cursor-pointer">
+                  Hourly
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
           <div className="space-y-2">
-            <Label
-              htmlFor="yearsOfExperience"
-              className="flex items-center gap-2"
-            >
-              Years of Experience
-            </Label>
-            <Input
-              id="yearsOfExperience"
-              name="yearsOfExperience"
-              type="number"
-              min={0}
-              placeholder="5"
-              value={data.yearsOfExperience ?? ""}
-              onChange={handleChange}
-            />
+            {salaryType === "monthly" ? (
+              <>
+                <Label htmlFor="expectedMonthlyIncome" className="flex items-center gap-2">
+                  <DollarSign className="size-4 text-muted-foreground" />
+                  Expected Monthly Income (EUR)
+                </Label>
+                <Input
+                  id="expectedMonthlyIncome"
+                  name="expectedMonthlyIncome"
+                  type="number"
+                  min={0}
+                  placeholder="2000"
+                  value={data.expectedMonthlyIncome ?? ""}
+                  onChange={handleChange}
+                />
+              </>
+            ) : (
+              <>
+                <Label htmlFor="expectedHourlyPay" className="flex items-center gap-2">
+                  <DollarSign className="size-4 text-muted-foreground" />
+                  Expected Hourly Pay (EUR)
+                </Label>
+                <Input
+                  id="expectedHourlyPay"
+                  name="expectedHourlyPay"
+                  type="number"
+                  min={0}
+                  placeholder="12"
+                  value={data.expectedHourlyPay ?? ""}
+                  onChange={handleChange}
+                />
+              </>
+            )}
           </div>
         </div>
 
@@ -259,8 +307,25 @@ export function JobPreferencesStep({
               }
             />
           </div>
+          </div>
+          <div className="space-y-2">
+            <Label
+              htmlFor="yearsOfExperience"
+              className="flex items-center gap-2"
+            >
+              Years of Experience
+            </Label>
+            <Input
+              id="yearsOfExperience"
+              name="yearsOfExperience"
+              type="number"
+              min={0}
+              placeholder="5"
+              value={data.yearsOfExperience ?? ""}
+              onChange={handleChange}
+            />
+          </div>
         </div>
-      </div>
 
       <div className="flex items-center justify-between pt-4">
         <div className="flex items-center gap-2">

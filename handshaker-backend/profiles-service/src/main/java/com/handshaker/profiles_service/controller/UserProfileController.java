@@ -1,13 +1,15 @@
 package com.handshaker.profiles_service.controller;
 
 import com.handshaker.profiles_service.dto.*;
-import com.handshaker.profiles_service.model.UserProfile;
 import com.handshaker.profiles_service.service.UserProfilesService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +19,8 @@ import java.util.UUID;
 public class UserProfileController {
 
     private final UserProfilesService service;
+    private static final Logger log = LoggerFactory.getLogger(UserProfileController.class);
+
 
     public UserProfileController(UserProfilesService service) {
         this.service = service;
@@ -89,6 +93,16 @@ public class UserProfileController {
             @PageableDefault(size = 20) Pageable pageable
     ) {
         return service.search(request, pageable);
+    }
+
+    @PostMapping("/me/profile-image")
+    public String uploadProfileImage(
+            Authentication auth,
+            @RequestParam("file") MultipartFile file
+    ) {
+        log.info("AUTH: " + auth);
+        UUID userId = UUID.fromString(auth.getPrincipal().toString());
+        return service.uploadProfileImage(userId, file);
     }
 
 }

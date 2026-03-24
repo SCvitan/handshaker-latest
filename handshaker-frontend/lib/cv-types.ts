@@ -25,6 +25,7 @@ export interface PersonalInfo {
   mobilePhoneNumber: string
   maritalStatus: string | null
   numberOfChildren: number | null
+  profilePictureUrl: string | null
 }
 
 export interface LegalStatus {
@@ -40,6 +41,7 @@ export interface JobPreferences {
   desiredIndustry: string | null
   desiredPosition: string | null
   expectedMonthlyIncome: number | null
+  expectedHourlyPay: number | null
   accommodationRequired: boolean
   transportationRequired: boolean
   desiredWorkingHoursPerDay: number | null
@@ -112,6 +114,7 @@ export interface UserProfile extends CVData {
   id: string
   email: string
   profileCompletion: number
+  profileImageUrl: string | null
 }
 
 export const INITIAL_CV_DATA: CVData = {
@@ -124,6 +127,7 @@ export const INITIAL_CV_DATA: CVData = {
     mobilePhoneNumber: "",
     maritalStatus: null,
     numberOfChildren: null,
+    profilePictureUrl: null,
   },
   legalStatus: {
     hasCroatianWorkPermit: false,
@@ -137,6 +141,7 @@ export const INITIAL_CV_DATA: CVData = {
     desiredIndustry: null,
     desiredPosition: null,
     expectedMonthlyIncome: null,
+    expectedHourlyPay: null,
     accommodationRequired: false,
     transportationRequired: false,
     desiredWorkingHoursPerDay: null,

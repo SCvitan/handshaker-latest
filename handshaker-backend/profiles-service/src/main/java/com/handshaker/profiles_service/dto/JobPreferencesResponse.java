@@ -9,6 +9,7 @@ public record JobPreferencesResponse(
         Industry desiredIndustry,
         String desiredPosition,
         BigDecimal expectedMonthlyIncome,
+        BigDecimal expectedHourlyPay,
         boolean accommodationRequired,
         boolean transportationRequired,
         Integer desiredWorkingHoursPerDay,

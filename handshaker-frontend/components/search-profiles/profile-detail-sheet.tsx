@@ -23,6 +23,7 @@ import {
   Calendar,
   Clock,
 } from "lucide-react"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import type { UserProfile } from "@/lib/cv-types"
 
 interface ProfileDetailSheetProps {
@@ -61,15 +62,30 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
     profile
   const completion = Math.round((profile.profileCompletion || 0) * 100)
   const age = personalInfo.dateOfBirth ? calculateAge(personalInfo.dateOfBirth) : null
+  const initials =
+    personalInfo.firstName && personalInfo.lastName
+      ? `${personalInfo.firstName[0]}${personalInfo.lastName[0]}`.toUpperCase()
+      : "?"
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader className="pb-4">
-          <SheetTitle className="text-xl">
-            {personalInfo.firstName} {personalInfo.lastName}
-          </SheetTitle>
-          <SheetDescription>{profile.email}</SheetDescription>
+          <div className="flex items-center gap-4">
+            <Avatar className="size-16 shrink-0">
+              <AvatarImage
+                src={profile.profileImageUrl ?? undefined}
+                alt={`${personalInfo.firstName} ${personalInfo.lastName}`}
+              />
+              <AvatarFallback className="text-lg font-semibold">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <SheetTitle className="text-xl">
+                {personalInfo.firstName} {personalInfo.lastName}
+              </SheetTitle>
+              <SheetDescription>{profile.email}</SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
 
         {/* Completion bar */}

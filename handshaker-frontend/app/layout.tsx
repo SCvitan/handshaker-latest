@@ -4,6 +4,7 @@ import { Inter, JetBrains_Mono } from "next/font/google"
 import { AuthProvider } from "@/components/auth-provider"
 import { Navbar } from "@/components/navbar"
 import "./globals.css"
+import { LanguageProvider } from "@/components/language-provider"
 
 const _inter = Inter({ subsets: ["latin"] })
 const _jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] })
@@ -40,10 +41,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <AuthProvider>
-          <Navbar />
-          {children}
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+             <Navbar />
+              {children}
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   )

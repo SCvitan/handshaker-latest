@@ -44,3 +44,7 @@ management:
 
 jwt:
   secret: ${JWT_SECRET}
+
+resend:
+  api-key: ${RESEND_API_KEY}
+  from-email: "onboarding@resend.dev"

@@ -36,7 +36,7 @@ public class JwtUtil {
     public UUID validateAndGetUserId(String token) {
         return UUID.fromString(
                 Jwts.parser()
-                        .setSigningKey(SECRET)
+                        .setSigningKey(getSigningKey())
                         .parseClaimsJws(token)
                         .getBody()
                         .getSubject()

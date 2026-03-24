@@ -45,8 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (email: string, password: string, role: UserRole) => {
-      const u = await registerUser(email, password, role)
-      setUser(u)
+      // No longer auto-logs in - backend sends verification email instead
+      await registerUser(email, password, role)
     },
     []
   )

@@ -8,8 +8,8 @@ import type {
   EmploymentCurrent,
 } from "./cv-types"
 
-const API_BASE = "http://142.132.181.45:8083"
-//const API_BASE = "http://localhost:8083"
+//const API_BASE = "http://142.132.181.45:8083"
+const API_BASE = "http://localhost:8083"
 
 /**
  * Authenticated fetch
@@ -40,7 +40,13 @@ async function authFetch(url: string, options: RequestInit = {}) {
 
 export async function fetchProfile(): Promise<UserProfile> {
   const res = await authFetch(`${API_BASE}/users/me`)
-  return res.json()
+  const json = await res.json()
+  // Server returns "employmentCurrentResponse", remap to our type
+  if (json.employmentCurrentResponse && !json.employmentCurrent) {
+    json.employmentCurrent = json.employmentCurrentResponse
+    delete json.employmentCurrentResponse
+  }
+  return json as UserProfile
 }
 
 export async function savePersonalInfo(data: PersonalInfo) {
@@ -48,6 +54,37 @@ export async function savePersonalInfo(data: PersonalInfo) {
     method: "PUT",
     body: JSON.stringify(data),
   })
+}
+
+/**
+ * Upload profile picture to R2 via backend
+ * Endpoint: POST /users/me/profile-image
+ * Format: multipart/form-data with "file" field
+ * Returns: URL string of uploaded image
+ */
+export async function uploadProfilePicture(file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const res = await fetch(`${API_BASE}/users/me/profile-image`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to upload profile picture")
+  }
+
+  // Backend returns the URL directly as text or JSON
+  const text = await res.text()
+  // Handle both plain text URL and JSON { url: "..." } responses
+  try {
+    const json = JSON.parse(text)
+    return json.url || json
+  } catch {
+    return text
+  }
 }
 
 export async function saveLegalStatus(data: LegalStatus) {
@@ -87,8 +124,8 @@ export async function saveEmploymentCurrent(data: EmploymentCurrent) {
 
 // ── Company endpoints (port 8082) ──
 
-//const COMPANY_API_BASE = "http://localhost:8082"
-const COMPANY_API_BASE = "http://142.132.181.45:8082"
+const COMPANY_API_BASE = "http://localhost:8082"
+//const COMPANY_API_BASE = "http://142.132.181.45:8082"
 
 export interface CompanyProfile {
   id: string
@@ -160,7 +197,7 @@ export async function searchProfiles(
   size = 20,
 ): Promise<ProfileSearchResponse> {
   const res = await authFetch(
-    `${API_BASE}/users/search`,
+    `${API_BASE}/users/search?page=${page}&size=${size}`,
     {
       method: "POST",
       body: JSON.stringify(filters),

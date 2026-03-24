@@ -15,6 +15,9 @@ public class UserProfile {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column
+    private String profileImageUrl;
+
     public UserProfile(){}
 
     @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -35,7 +38,7 @@ public class UserProfile {
     @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private EmploymentCurrent employmentCurrent;
 
-    public UserProfile(UUID id, String email, PersonalInfo personalInfo, LegalStatus legalStatus, JobPreferences jobPreferences, List<LanguageSkill> languageSkills, Accommodation accommodation, EmploymentCurrent employmentCurrent) {
+    public UserProfile(UUID id, String email, PersonalInfo personalInfo, LegalStatus legalStatus, JobPreferences jobPreferences, List<LanguageSkill> languageSkills, Accommodation accommodation, EmploymentCurrent employmentCurrent, String profileImageUrl) {
         this.id = id;
         this.email = email;
         this.personalInfo = personalInfo;
@@ -44,6 +47,7 @@ public class UserProfile {
         this.languageSkills = languageSkills;
         this.accommodation = accommodation;
         this.employmentCurrent = employmentCurrent;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public UUID getId() {
@@ -108,6 +112,14 @@ public class UserProfile {
 
     public void setEmploymentCurrent(EmploymentCurrent employmentCurrent) {
         this.employmentCurrent = employmentCurrent;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 
     public static UserProfile create(UUID id, String email) {
