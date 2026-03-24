@@ -28,7 +28,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     var config = new org.springframework.web.cors.CorsConfiguration();
                     config.setAllowCredentials(true);
-                    config.setAllowedOrigins(List.of("http://localhost:3000", "http://142.132.181.45:3000"));
+                    config.setAllowedOrigins(List.of("http://localhost:3000", "http://142.132.181.45:3000", "https://croworker.app/"));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     return config;
