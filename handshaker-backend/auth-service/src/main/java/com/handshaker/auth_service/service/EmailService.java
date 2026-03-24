@@ -15,7 +15,7 @@ public class EmailService {
 
     public void sendVerificationEmail(String to, String token) {
 
-        String verificationLink = "https://croworker.app/auth/verify?token=" + token;
+        String verificationLink = "https://croworker.app/api/auth/verify?token=" + token;
 
         String body = """
         {
