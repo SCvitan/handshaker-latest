@@ -1,7 +1,8 @@
-//const API_BASE = "http://142.132.181.45:8080"
-const API_BASE = "http://localhost:8080"
+const API_BASE = "https://croworker.app"
+// const API_BASE = "http://localhost:8080"
 
-const API_BASE_PROFILES = "http://localhost:8083"
+// const API_BASE_PROFILES = "http://localhost:8083"
+const API_BASE_PROFILES = "https://croworker.app"
 
 export type UserRole = "USER" | "COMPANY"
 

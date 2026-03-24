@@ -183,6 +183,7 @@ services:
       - frontend
       - auth-service
       - profiles-service
+      - company-service
 
   prometheus:
     image: prom/prometheus

@@ -152,7 +152,7 @@ public class AuthService {
         String jwt = jwtUtil.generateToken(user.getId(), user.getRole());
         addJwtCookie(response, jwt);
         // redirect to frontend, user is now logged in
-        response.sendRedirect("http://localhost:3000/cv-builder");
+        response.sendRedirect("https://croworker.app/cv-builder");
     }
 
     private void addJwtCookie(HttpServletResponse response, String token) {
