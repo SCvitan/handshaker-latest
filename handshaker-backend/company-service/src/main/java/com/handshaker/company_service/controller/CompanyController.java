@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/companies")
+@RequestMapping("/api/companies")
 public class CompanyController {
 
     private final CompanyService service;

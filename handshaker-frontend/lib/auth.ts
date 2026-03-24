@@ -20,7 +20,7 @@ export interface User {
 async function enrichWithProfileImage(user: User): Promise<User> {
   if (user.role !== "USER") return user
   try {
-    const profileRes = await fetch(`${API_BASE_PROFILES}/users/me`, {
+    const profileRes = await fetch(`${API_BASE_PROFILES}/api/users/me`, {
       credentials: "include",
     })
     if (profileRes.ok) {
@@ -44,7 +44,7 @@ export async function loginUser(
   email: string,
   password: string
 ): Promise<User> {
-  const res = await fetch(`${API_BASE}/auth/login`, {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -70,7 +70,7 @@ export async function registerUser(
   password: string,
   role: UserRole
 ): Promise<void> {
-  const res = await fetch(`${API_BASE}/auth/register`, {
+  const res = await fetch(`${API_BASE}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password, role }),
@@ -91,7 +91,7 @@ export async function registerUser(
  */
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const res = await fetch(`${API_BASE}/auth/me`, {
+    const res = await fetch(`${API_BASE}/api/auth/me`, {
       credentials: "include",
     })
 
@@ -108,7 +108,7 @@ export async function getCurrentUser(): Promise<User | null> {
  * - backend clears the HttpOnly cookie
  */
 export async function logoutUser(): Promise<void> {
-  await fetch(`${API_BASE}/auth/logout`, {
+  await fetch(`${API_BASE}/api/auth/logout`, {
     method: "POST",
     credentials: "include",
   })
@@ -124,7 +124,7 @@ export async function changePassword(
   currentPassword: string,
   newPassword: string
 ): Promise<void> {
-  const res = await fetch(`${API_BASE}/auth/change-password`, {
+  const res = await fetch(`${API_BASE}/api/auth/change-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -144,7 +144,7 @@ export async function changePassword(
  * Expected body: { email }
  */
 export async function requestPasswordReset(email: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+  const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
@@ -162,7 +162,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
  * Expected endpoint: DELETE /auth/account
  */
 export async function deleteAccount(): Promise<void> {
-  const res = await fetch(`${API_BASE}/auth/account`, {
+  const res = await fetch(`${API_BASE}/api/auth/account`, {
     method: "DELETE",
     credentials: "include",
   })

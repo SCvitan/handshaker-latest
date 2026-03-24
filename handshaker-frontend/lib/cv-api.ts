@@ -39,7 +39,7 @@ async function authFetch(url: string, options: RequestInit = {}) {
 }
 
 export async function fetchProfile(): Promise<UserProfile> {
-  const res = await authFetch(`${API_BASE}/users/me`)
+  const res = await authFetch(`${API_BASE}/api/users/me`)
   const json = await res.json()
   // Server returns "employmentCurrentResponse", remap to our type
   if (json.employmentCurrentResponse && !json.employmentCurrent) {
@@ -50,7 +50,7 @@ export async function fetchProfile(): Promise<UserProfile> {
 }
 
 export async function savePersonalInfo(data: PersonalInfo) {
-  return authFetch(`${API_BASE}/users/me/personal`, {
+  return authFetch(`${API_BASE}/api/users/me/personal`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
@@ -66,7 +66,7 @@ export async function uploadProfilePicture(file: File): Promise<string> {
   const formData = new FormData()
   formData.append("file", file)
 
-  const res = await fetch(`${API_BASE}/users/me/profile-image`, {
+  const res = await fetch(`${API_BASE}/api/users/me/profile-image`, {
     method: "POST",
     credentials: "include",
     body: formData,
@@ -88,35 +88,35 @@ export async function uploadProfilePicture(file: File): Promise<string> {
 }
 
 export async function saveLegalStatus(data: LegalStatus) {
-  return authFetch(`${API_BASE}/users/me/legal`, {
+  return authFetch(`${API_BASE}/api/users/me/legal`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveJobPreferences(data: JobPreferences) {
-  return authFetch(`${API_BASE}/users/me/job-preferences`, {
+  return authFetch(`${API_BASE}/api/users/me/job-preferences`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveLanguages(data: Language[]) {
-  return authFetch(`${API_BASE}/users/me/languages`, {
+  return authFetch(`${API_BASE}/api/users/me/languages`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveAccommodation(data: Accommodation) {
-  return authFetch(`${API_BASE}/users/me/accommodation`, {
+  return authFetch(`${API_BASE}/api/users/me/accommodation`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveEmploymentCurrent(data: EmploymentCurrent) {
-  return authFetch(`${API_BASE}/users/me/employment-current`, {
+  return authFetch(`${API_BASE}/api/users/me/employment-current`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
@@ -149,7 +149,7 @@ export async function fetchCompanyProfile(): Promise<CompanyProfile> {
 }
 
 export async function saveCompanyProfile(data: CompanyProfileUpdate) {
-  return authFetch(`${COMPANY_API_BASE}/companies/me`, {
+  return authFetch(`${COMPANY_API_BASE}/api/companies/me`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
@@ -197,7 +197,7 @@ export async function searchProfiles(
   size = 20,
 ): Promise<ProfileSearchResponse> {
   const res = await authFetch(
-    `${API_BASE}/users/search?page=${page}&size=${size}`,
+    `${API_BASE}/api/users/search?page=${page}&size=${size}`,
     {
       method: "POST",
       body: JSON.stringify(filters),
