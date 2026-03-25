@@ -13,18 +13,21 @@ public class EmailService {
     @Value("${RESEND_API_KEY}")
     private String apiKey;
 
+    @Value("${resend.from-email}")
+    private String fromEmail;
+
     public void sendVerificationEmail(String to, String token) {
 
         String verificationLink = "https://croworker.app/api/auth/verify?token=" + token;
 
         String body = """
-        {
-          "from": "onboarding@resend.dev",
-          "to": ["%s"],
-          "subject": "Verify your email",
-          "html": "<p>Click below to verify:</p><a href='%s'>Verify Email</a>"
-        }
-        """.formatted(to, verificationLink);
+                    {
+                        "from": "%s",
+                        "to": ["%s"],
+                        "subject": "Verify your email",
+                        "html": "<p>Click below to verify:</p><a href='%s'>Verify Email</a>"
+                    }
+                   """.formatted(fromEmail, to, verificationLink);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(apiKey);
