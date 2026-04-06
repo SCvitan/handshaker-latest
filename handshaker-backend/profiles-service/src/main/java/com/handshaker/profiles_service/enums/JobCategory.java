@@ -1,13 +1,10 @@
 package com.handshaker.profiles_service.enums;
 
-public enum Industry {
-
-    HEALTHCARE,
-    MANUFACTURING,
+public enum JobCategory {
     TRANSPORTATION,
     CONSTRUCTION,
     HOSPITALITY,
+    MANUFACTURING,
     CLEANING,
-    OTHER
-
+    AGRICULTURE
 }

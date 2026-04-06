@@ -1,8 +1,8 @@
 package com.handshaker.profiles_service.model;
 
+import com.handshaker.profiles_service.enums.Country;
 import com.handshaker.profiles_service.enums.Gender;
 import com.handshaker.profiles_service.enums.MaritalStatus;
-import com.handshaker.profiles_service.enums.StateOfOrigin;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -28,13 +28,13 @@ public class PersonalInfo {
     private Gender gender;
 
     @Enumerated(EnumType.STRING)
-    private StateOfOrigin stateOfOrigin;
+    private Country stateOfOrigin;
+    @Enumerated
+    private Country countryOfResidence;
     private String mobilePhone;
 
     @Enumerated(EnumType.STRING)
     private MaritalStatus maritalStatus;
-
-    private Integer numberOfChildren;
 
     public PersonalInfo() {}
 
@@ -86,12 +86,20 @@ public class PersonalInfo {
         this.gender = gender;
     }
 
-    public StateOfOrigin getStateOfOrigin() {
+    public Country getStateOfOrigin() {
         return stateOfOrigin;
     }
 
-    public void setStateOfOrigin(StateOfOrigin stateOfOrigin) {
+    public void setStateOfOrigin(Country stateOfOrigin) {
         this.stateOfOrigin = stateOfOrigin;
+    }
+
+    public Country getCountryOfCurrentResidence() {
+        return countryOfResidence;
+    }
+
+    public void setCountryOfResidence(Country countryOfResidence) {
+        this.countryOfResidence = countryOfResidence;
     }
 
     public String getMobilePhone() {
@@ -110,12 +118,5 @@ public class PersonalInfo {
         this.maritalStatus = maritalStatus;
     }
 
-    public Integer getNumberOfChildren() {
-        return numberOfChildren;
-    }
-
-    public void setNumberOfChildren(Integer numberOfChildren) {
-        this.numberOfChildren = numberOfChildren;
-    }
 
 }

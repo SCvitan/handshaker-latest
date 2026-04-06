@@ -1,6 +1,6 @@
 package com.handshaker.profiles_service.model;
 
-import com.handshaker.profiles_service.enums.Industry;
+import com.handshaker.profiles_service.enums.JobCategory;
 import jakarta.persistence.*;
 
 import java.util.UUID;
@@ -18,7 +18,7 @@ public class EmploymentCurrent {
     private UserProfile profile;
 
     @Enumerated(EnumType.STRING)
-    private Industry industry;
+    private JobCategory industry;
     private String jobTitleInCroatia;
 
     private String employerName;
@@ -48,15 +48,7 @@ public class EmploymentCurrent {
     public void setProfile(UserProfile profile) {
         this.profile = profile;
     }
-
-    public Industry getIndustry() {
-        return industry;
-    }
-
-    public void setIndustry(Industry industry) {
-        this.industry = industry;
-    }
-
+    
     public String getJobTitleInCroatia() {
         return jobTitleInCroatia;
     }

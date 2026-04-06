@@ -102,6 +102,10 @@
       "personalInfoDesc": "Name, date of birth, contact details",
       "legalStatus": "Legal Status",
       "legalStatusDesc": "Work permit, employment, identification",
+      "workExperience":"Work Experience",
+      "workExperienceDesc":"Your work experience",
+      "education":"Education",
+      "educationDesc": "Your formal education",
       "jobPreferences": "Job Preferences",
       "jobPreferencesDesc": "Industry, position, work conditions",
       "languages": "Languages",
@@ -109,7 +113,9 @@
       "accommodation": "Accommodation",
       "accommodationDesc": "Address and living arrangements",
       "employment": "Current Work Details",
-      "employmentDesc": "Current employer and work address"
+      "employmentDesc": "Current employer and work address",
+      "documentation": "Documentation",
+      "documentationDesc": "Documentation files"
     },
     "saveChanges": "Save Changes",
     "savingChanges": "Saving..."

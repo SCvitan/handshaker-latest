@@ -1,9 +1,9 @@
 package com.handshaker.profiles_service.dto;
 
-import com.handshaker.profiles_service.enums.Industry;
+import com.handshaker.profiles_service.enums.JobCategory;
 
 public record EmploymentCurrentRequest(
-        Industry industry,
+        JobCategory industry,
         String jobTitleInCroatia,
         String employerName,
         String employerAddress,

@@ -1,10 +1,82 @@
+export const POSITION_OPTIONS: Record<string, string[]> = {
+  TRANSPORTATION: [
+    "Truck driver (cat. C)",
+    "Taxi driver",
+    "Van driver cat. B (up to 3.5t)",
+    "Bus driver (cat. D)",
+    "Forklift operator",
+    "Warehouse worker",
+    "Delivery person",
+    "Loading operator",
+    "Other",
+  ],
+  CONSTRUCTION: [
+    "Mason/Bricklayer",
+    "Carpenter (formwork)",
+    "Rebar worker",
+    "Facade worker",
+    "Tile layer",
+    "Painter",
+    "Plumber",
+    "Electrician",
+    "Roofer",
+    "Concrete worker",
+    "Joiner/Carpenter",
+    "Metalworker",
+    "Drywall worker",
+    "Chimney sweep",
+    "Other",
+  ],
+  HOSPITALITY: [
+    "Cook/Chef",
+    "Kitchen helper",
+    "Waiter/Waitress",
+    "Bartender",
+    "Receptionist",
+    "Housekeeper",
+    "Pizza maker",
+    "Pastry chef",
+    "Baker",
+    "Barista",
+    "Other",
+  ],
+  MANUFACTURING: [
+    "Welder",
+    "Assembly worker",
+    "CNC operator",
+    "Mechanical technician",
+    "Quality controller",
+    "Production line worker",
+    "Electromechanician",
+    "Other",
+  ],
+  CLEANING: [
+    "Cleaner",
+    "Window cleaner",
+    "Industrial cleaner",
+    "Municipal worker",
+    "Gardener",
+    "Handyman",
+    "Other",
+  ],
+  AGRICULTURE: [
+    "Picker (fruit/veg)",
+    "Greenhouse worker",
+    "Farm worker",
+    "Tractor operator",
+    "Vineyard worker",
+    "Livestock worker",
+    "Other",
+  ],
+} as const
+
 export const INDUSTRIES = [
-  { value: "HEALTHCARE", label: "Healthcare" },
-  { value: "MANUFACTURING", label: "Manufacturing" },
   { value: "TRANSPORTATION", label: "Transportation" },
   { value: "CONSTRUCTION", label: "Construction" },
   { value: "HOSPITALITY", label: "Hospitality" },
+  { value: "MANUFACTURING", label: "Manufacturing" },
   { value: "CLEANING", label: "Cleaning" },
+  { value: "AGRICULTURE", label: "Agriculture" },
   { value: "OTHER", label: "Other" },
 ] as const
 
@@ -14,6 +86,19 @@ export const COUNTRIES = [
   { value: "NEPAL", label: "Nepal" },
   { value: "PHILIPPINES", label: "Philippines" },
   { value: "EGYPT", label: "Egypt" },
+  { value: "BANGLADESH", label: "Bangladesh" },
+  { value: "PAKISTAN", label: "Pakistan" },
+  { value: "BOSNIA_AND_HERZEGOVINA", label: "Bosnia and Herzegovina" },
+  { value: "SERBIA", label: "Serbia" },
+  { value: "NORTH_MACEDONIA", label: "North Macedonia" },
+  { value: "ALBANIA", label: "Albania" },
+  { value: "KOSOVO", label: "Kosovo" },
+  { value: "UKRAINE", label: "Ukraine" },
+  { value: "TURKEY", label: "Turkey" },
+  { value: "VIETNAM", label: "Vietnam" },
+  { value: "INDONESIA", label: "Indonesia" },
+  { value: "SRI_LANKA", label: "Sri Lanka" },
+  { value: "OTHER", label: "Other" },
 ] as const
 
 export interface PersonalInfo {
@@ -22,15 +107,16 @@ export interface PersonalInfo {
   dateOfBirth: string | null
   gender: string | null
   stateOfOrigin: string | null
+  countryOfResidence: string | null
   mobilePhoneNumber: string
   maritalStatus: string | null
-  numberOfChildren: number | null
   profilePictureUrl: string | null
 }
 
 export interface LegalStatus {
   hasCroatianWorkPermit: boolean
   workPermitExpirationDate: string | null
+  workPermitNoExpiration: boolean
   currentlyEmployedInCroatia: boolean
   dateOfArrivalInCroatia: string | null
   passportExpirationDate: string | null
@@ -46,9 +132,37 @@ export interface JobPreferences {
   transportationRequired: boolean
   desiredWorkingHoursPerDay: number | null
   desiredWorkingDaysPerMonth: number | null
-  yearsOfExperience: number | null
   experienceLevel: string | null
+  preferredWorkTypes: string[] // "FULL_TIME", "PART_TIME", "SEASONAL"
 }
+
+export interface WorkExperience {
+  companyName: string
+  position: string
+  shortDescription: string
+  yearsOfExperience: string // "LESS_THAN_1", "1", "2", "3", "4", "5_PLUS"
+}
+
+export interface Education {
+  highestLevel: string | null // "NO_FORMAL", "PRIMARY", "SECONDARY", "VOCATIONAL", "BACHELOR", "MASTER", "DOCTORATE"
+  schoolName: string
+  titleAcquired: string
+  country: string | null
+  dateFinished: string | null
+}
+
+export interface DocumentItem {
+  id: string
+  documentType: "WORK_PERMIT" | "PASSPORT" | "RESIDENCE_CARD" | "PAY_SLIP" | "OTHER"
+  fileUrl: string
+  thumbnailUrl: string | null
+  fileName: string
+  contentType: string
+  previewAvailable: boolean
+  uploadedAt: string
+}
+
+export type Documentation = DocumentItem[]
 
 export interface Language {
   language: string | null
@@ -104,17 +218,27 @@ export const DEFAULT_WORK_ADDRESS = {
 export interface CVData {
   personalInfo: PersonalInfo
   legalStatus: LegalStatus
+  workExperience: WorkExperience[]
+  education: Education
   jobPreferences: JobPreferences
   languages: Language[]
   accommodation: Accommodation
-  employmentCurrent: EmploymentCurrent
+  documentation: Documentation
 }
 
-export interface UserProfile extends CVData {
+export interface UserProfile {
   id: string
   email: string
-  profileCompletion: number
   profileImageUrl: string | null
+  profileCompletion: number
+  personalInfo: PersonalInfo
+  legalStatus: LegalStatus
+  jobPreferences: JobPreferences
+  languages: Language[]
+  accommodation: Accommodation
+  education: Education
+  workExperiences: WorkExperience[]
+  documents: Documentation
 }
 
 export const INITIAL_CV_DATA: CVData = {
@@ -124,18 +248,27 @@ export const INITIAL_CV_DATA: CVData = {
     dateOfBirth: null,
     gender: null,
     stateOfOrigin: null,
+    countryOfResidence: null,
     mobilePhoneNumber: "",
     maritalStatus: null,
-    numberOfChildren: null,
     profilePictureUrl: null,
   },
   legalStatus: {
     hasCroatianWorkPermit: false,
     workPermitExpirationDate: null,
+    workPermitNoExpiration: false,
     currentlyEmployedInCroatia: false,
     dateOfArrivalInCroatia: null,
     passportExpirationDate: null,
     oib: "",
+  },
+  workExperience: [] as WorkExperience[],
+  education: {
+    highestLevel: null,
+    schoolName: "",
+    titleAcquired: "",
+    country: null,
+    dateFinished: null,
   },
   jobPreferences: {
     desiredIndustry: null,
@@ -146,8 +279,8 @@ export const INITIAL_CV_DATA: CVData = {
     transportationRequired: false,
     desiredWorkingHoursPerDay: null,
     desiredWorkingDaysPerMonth: null,
-    yearsOfExperience: null,
     experienceLevel: null,
+    preferredWorkTypes: [],
   },
   languages: [
     { language: null, written: 1, spoken: 1, reading: 1, understanding: 1 },
@@ -164,21 +297,7 @@ export const INITIAL_CV_DATA: CVData = {
     peopleInAccommodation: null,
     peopleInRoom: null,
   },
-  employmentCurrent: {
-    industry: null,
-    jobTitleInCroatia: null,
-    employerName: "",
-    employerAddress: "",
-    employerContactInfo: "",
-    cityOfWork: "",
-    numberOfPreviousEmployersInCroatia: null,
-    workAddress: {
-      postalCode: null,
-      city: "",
-      street: "",
-      houseNumber: null,
-    },
-  },
+  documentation: [] as Documentation,
 }
 
 export const GENDER_OPTIONS = ["MALE", "FEMALE", "OTHER"]
@@ -209,3 +328,28 @@ export const LANGUAGE_OPTIONS = [
 export const ACCOMMODATION_PROVIDER_OPTIONS = ["EMPLOYER", "SELF"]
 export const ACCOMMODATION_TYPE_OPTIONS = ["ALONE", "WITH_FAMILY", "WITH_WORKERS", "WITH_FRIENDS"]
 export const PEOPLE_COUNT_OPTIONS = ["ONE", "TWO", "THREE", "FOUR", "FIVE_OR_MORE"]
+
+export const YEARS_EXPERIENCE_OPTIONS = [
+  { value: "LESS_THAN_1", label: "Less than 1 year" },
+  { value: "1", label: "1 year" },
+  { value: "2", label: "2 years" },
+  { value: "3", label: "3 years" },
+  { value: "4", label: "4 years" },
+  { value: "5_PLUS", label: "5+ years" },
+] as const
+
+export const EDUCATION_LEVEL_OPTIONS = [
+  { value: "NO_FORMAL", label: "No formal education" },
+  { value: "PRIMARY", label: "Primary school" },
+  { value: "SECONDARY", label: "Secondary school / High school" },
+  { value: "VOCATIONAL", label: "Vocational / Trade school" },
+  { value: "BACHELOR", label: "Bachelor's degree" },
+  { value: "MASTER", label: "Master's degree" },
+  { value: "DOCTORATE", label: "Doctorate / PhD" },
+] as const
+
+export const WORK_TYPE_OPTIONS = [
+  { value: "FULL_TIME", label: "Full-time" },
+  { value: "PART_TIME", label: "Part-time" },
+  { value: "SEASONAL", label: "Seasonal work" },
+] as const

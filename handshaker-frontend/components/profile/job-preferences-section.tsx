@@ -16,7 +16,7 @@ import {
 import { Save, Loader2 } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { JobPreferences } from "@/lib/cv-types"
-import { EXPERIENCE_LEVEL_OPTIONS, INDUSTRIES } from "@/lib/cv-types"
+import { EXPERIENCE_LEVEL_OPTIONS, INDUSTRIES, POSITION_OPTIONS } from "@/lib/cv-types"
 import { saveJobPreferences } from "@/lib/cv-api"
 
 interface JobPreferencesSectionProps {
@@ -106,12 +106,29 @@ export function JobPreferencesSection({
         </div>
         <div className="space-y-2">
           <Label htmlFor="p-desiredPosition">Position</Label>
-          <Input
-            id="p-desiredPosition"
-            name="desiredPosition"
-            value={data.desiredPosition ?? ""}
-            onChange={handleChange}
-          />
+          {data.desiredIndustry ? (
+            <Select
+              value={data.desiredPosition ?? ""}
+              onValueChange={(v) => handleSelect("desiredPosition", v)}
+            >
+              <SelectTrigger id="p-desiredPosition">
+                <SelectValue placeholder="Select position" />
+              </SelectTrigger>
+              <SelectContent>
+                {(POSITION_OPTIONS[data.desiredIndustry as keyof typeof POSITION_OPTIONS] || []).map(
+                  (position) => (
+                    <SelectItem key={position} value={position}>
+                      {position}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="text-sm text-muted-foreground p-2 rounded border border-dashed">
+              Select an industry first
+            </div>
+          )}
         </div>
       </div>
 
@@ -169,20 +186,6 @@ export function JobPreferencesSection({
               />
             </>
           )}
-        </div>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="p-yearsExp">Years of Experience</Label>
-          <Input
-            id="p-yearsExp"
-            name="yearsOfExperience"
-            type="number"
-            min={0}
-            value={data.yearsOfExperience ?? ""}
-            onChange={handleChange}
-          />
         </div>
       </div>
 

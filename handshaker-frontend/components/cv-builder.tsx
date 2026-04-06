@@ -6,30 +6,45 @@ import { useLanguage } from "@/components/language-provider"
 import { StepIndicator } from "./cv-builder/step-indicator"
 import { PersonalInfoStep } from "./cv-builder/personal-info-step"
 import { LegalStatusStep } from "./cv-builder/legal-status-step"
+import { WorkExperienceStep } from "./cv-builder/work-experience-step"
+import { EducationStep } from "./cv-builder/education-step"
 import { JobPreferencesStep } from "./cv-builder/job-preferences-step"
 import { LanguagesStep } from "./cv-builder/languages-step"
 import { AccommodationStep } from "./cv-builder/accommodation-step"
-import { EmploymentCurrentStep } from "./cv-builder/employment-current-step"
+import { DocumentationStep } from "./cv-builder/documentation-step"
 import type { CVData } from "@/lib/cv-types"
 import { INITIAL_CV_DATA } from "@/lib/cv-types"
 import {
   fetchProfile,
   savePersonalInfo,
   saveLegalStatus,
+  saveWorkExperience,
+  saveEducation,
   saveJobPreferences,
   saveLanguages,
   saveAccommodation,
-  saveEmploymentCurrent,
 } from "@/lib/cv-api"
 import { Loader2 } from "lucide-react"
+
+// New step order:
+// 1. Personal Info
+// 2. Legal Status
+// 3. Work Experience (NEW)
+// 4. Education (NEW)
+// 5. Job Preferences
+// 6. Languages
+// 7. Accommodation
+// 8. Documentation (replaces Employment Current)
 
 const STEP_KEYS = [
   "personalInfo",
   "legalStatus",
+  "workExperience",
+  "education",
   "jobPreferences",
   "languages",
   "accommodation",
-  "currentWork",
+  "documentation",
 ] as const
 
 export function CVBuilder() {
@@ -50,10 +65,12 @@ export function CVBuilder() {
           setCVData({
             personalInfo: profile.personalInfo,
             legalStatus: profile.legalStatus,
+            workExperience: profile.workExperiences || [],
+            education: profile.education || INITIAL_CV_DATA.education,
             jobPreferences: profile.jobPreferences,
             languages: profile.languages.length > 0 ? profile.languages : INITIAL_CV_DATA.languages,
             accommodation: profile.accommodation,
-            employmentCurrent: profile.employmentCurrent,
+            documentation: profile.documents || [],
           })
           setProfileImageUrl(profile.profileImageUrl)
         }
@@ -66,9 +83,21 @@ export function CVBuilder() {
     loadExistingProfile()
   }, [])
 
+  // Step names for display - using English for now
+  const STEP_NAMES: Record<string, string> = {
+    personalInfo: "Personal Info",
+    legalStatus: "Legal Status",
+    workExperience: "Work Experience",
+    education: "Education",
+    jobPreferences: "Job Preferences",
+    languages: "Languages",
+    accommodation: "Accommodation",
+    documentation: "Documentation",
+  }
+
   const STEPS = STEP_KEYS.map((key, i) => ({
     id: i + 1,
-    name: t(`cvBuilder.steps.${key}`),
+    name: STEP_NAMES[key] || t(`cvBuilder.steps.${key}`),
   }))
 
   const updatePersonalInfo = (data: CVData["personalInfo"]) => {
@@ -77,6 +106,14 @@ export function CVBuilder() {
 
   const updateLegalStatus = (data: CVData["legalStatus"]) => {
     setCVData((prev) => ({ ...prev, legalStatus: data }))
+  }
+
+  const updateWorkExperience = (data: CVData["workExperience"]) => {
+    setCVData((prev) => ({ ...prev, workExperience: data }))
+  }
+
+  const updateEducation = (data: CVData["education"]) => {
+    setCVData((prev) => ({ ...prev, education: data }))
   }
 
   const updateJobPreferences = (data: CVData["jobPreferences"]) => {
@@ -91,8 +128,8 @@ export function CVBuilder() {
     setCVData((prev) => ({ ...prev, accommodation: data }))
   }
 
-  const updateEmploymentCurrent = (data: CVData["employmentCurrent"]) => {
-    setCVData((prev) => ({ ...prev, employmentCurrent: data }))
+  const updateDocumentation = (data: CVData["documentation"]) => {
+    setCVData((prev) => ({ ...prev, documentation: data }))
   }
 
   async function nextStep() {
@@ -125,16 +162,23 @@ export function CVBuilder() {
           await saveLegalStatus(cvData.legalStatus)
           break
         case 3:
-          await saveJobPreferences(cvData.jobPreferences)
+          await saveWorkExperience(cvData.workExperience)
           break
         case 4:
-          await saveLanguages(cvData.languages)
+          await saveEducation(cvData.education)
           break
         case 5:
-          await saveAccommodation(cvData.accommodation)
+          await saveJobPreferences(cvData.jobPreferences)
           break
         case 6:
-          await saveEmploymentCurrent(cvData.employmentCurrent)
+          await saveLanguages(cvData.languages)
+          break
+        case 7:
+          await saveAccommodation(cvData.accommodation)
+          break
+        case 8:
+          // Documents are uploaded directly via the upload API
+          // No need to save anything here
           break
       }
     } catch (err) {
@@ -197,6 +241,28 @@ export function CVBuilder() {
         )}
 
         {currentStep === 3 && (
+          <WorkExperienceStep
+            data={cvData.workExperience}
+            onUpdate={updateWorkExperience}
+            onNext={nextStep}
+            onBack={prevStep}
+            onSaveAndHome={handleSaveAndHome}
+            isSaving={isSaving}
+          />
+        )}
+
+        {currentStep === 4 && (
+          <EducationStep
+            data={cvData.education}
+            onUpdate={updateEducation}
+            onNext={nextStep}
+            onBack={prevStep}
+            onSaveAndHome={handleSaveAndHome}
+            isSaving={isSaving}
+          />
+        )}
+
+        {currentStep === 5 && (
           <JobPreferencesStep
             data={cvData.jobPreferences}
             onUpdate={updateJobPreferences}
@@ -207,7 +273,7 @@ export function CVBuilder() {
           />
         )}
 
-        {currentStep === 4 && (
+        {currentStep === 6 && (
           <LanguagesStep
             data={cvData.languages}
             onUpdate={updateLanguages}
@@ -218,7 +284,7 @@ export function CVBuilder() {
           />
         )}
 
-        {currentStep === 5 && (
+        {currentStep === 7 && (
           <AccommodationStep
             data={cvData.accommodation}
             onUpdate={updateAccommodation}
@@ -229,13 +295,13 @@ export function CVBuilder() {
           />
         )}
 
-        {currentStep === 6 && (
-          <EmploymentCurrentStep
-            data={cvData.employmentCurrent}
-            onUpdate={updateEmploymentCurrent}
+        {currentStep === 8 && (
+          <DocumentationStep
+            data={cvData.documentation}
+            onUpdate={updateDocumentation}
             onBack={prevStep}
             onSaveAndHome={handleSaveAndHome}
-            onFinish={() => handleFinish()}
+            onFinish={handleFinish}
             isSaving={isSaving}
           />
         )}

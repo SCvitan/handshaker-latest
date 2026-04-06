@@ -10,5 +10,6 @@ public record UpdateLegalStatusRequest(
         LocalDate dateOfArrivalInCroatia,
         LocalDate passportExpirationDate,
         String passportAddress,
-        String oib
+        String oib,
+        Boolean workPermitNoExpiration
 ) {}

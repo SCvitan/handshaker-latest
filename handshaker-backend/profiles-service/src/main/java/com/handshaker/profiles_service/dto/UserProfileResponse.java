@@ -1,7 +1,6 @@
 package com.handshaker.profiles_service.dto;
 
 
-import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +14,8 @@ public record UserProfileResponse(
         JobPreferencesResponse jobPreferences,
         List<LanguageSkillResponse> languages,
         AccommodationResponse accommodation,
-        EmploymentCurrentResponse employmentCurrent,
+        EducationResponse education,
+        List<WorkExperienceResponse> workExperiences,
+        List<UserDocumentResponse> documents,
         Double profileCompletion
 ) {}

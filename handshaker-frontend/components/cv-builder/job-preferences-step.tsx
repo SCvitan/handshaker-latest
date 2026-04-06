@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -23,7 +24,7 @@ import {
 } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { JobPreferences } from "@/lib/cv-types"
-import { EXPERIENCE_LEVEL_OPTIONS, INDUSTRIES } from "@/lib/cv-types"
+import { EXPERIENCE_LEVEL_OPTIONS, INDUSTRIES, WORK_TYPE_OPTIONS, POSITION_OPTIONS } from "@/lib/cv-types"
 
 interface JobPreferencesStepProps {
   data: JobPreferences
@@ -64,7 +65,6 @@ export function JobPreferencesStep({
       "expectedHourlyPay",
       "desiredWorkingHoursPerDay",
       "desiredWorkingDaysPerMonth",
-      "yearsOfExperience",
     ]
     if (numericFields.includes(name)) {
       onUpdate({ ...data, [name]: value === "" ? null : Number(value) })
@@ -79,6 +79,15 @@ export function JobPreferencesStep({
 
   const handleSwitch = (name: keyof JobPreferences, checked: boolean) => {
     onUpdate({ ...data, [name]: checked })
+  }
+
+  const handleWorkTypeToggle = (type: string, checked: boolean) => {
+    const currentTypes = data.preferredWorkTypes || []
+    if (checked) {
+      onUpdate({ ...data, preferredWorkTypes: [...currentTypes, type] })
+    } else {
+      onUpdate({ ...data, preferredWorkTypes: currentTypes.filter((t) => t !== type) })
+    }
   }
 
   const isValid = data.desiredIndustry && data.desiredPosition
@@ -128,13 +137,57 @@ export function JobPreferencesStep({
               <Briefcase className="size-4 text-muted-foreground" />
               Position *
             </Label>
-            <Input
-              id="desiredPosition"
-              name="desiredPosition"
-              placeholder="Driver"
-              value={data.desiredPosition ?? ""}
-              onChange={handleChange}
-            />
+            {data.desiredIndustry ? (
+              <Select
+                value={data.desiredPosition ?? ""}
+                onValueChange={(v) => handleSelect("desiredPosition", v)}
+              >
+                <SelectTrigger id="desiredPosition">
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(POSITION_OPTIONS[data.desiredIndustry as keyof typeof POSITION_OPTIONS] || []).map(
+                    (position) => (
+                      <SelectItem key={position} value={position}>
+                        {position}
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="text-sm text-muted-foreground p-2 rounded border border-dashed">
+                Select an industry first
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Preferred Work Type - Multiple Selection */}
+        <div className="space-y-3">
+          <Label className="flex items-center gap-2">
+            <Clock className="size-4 text-muted-foreground" />
+            Preferred Work Type
+          </Label>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Select all that apply
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {WORK_TYPE_OPTIONS.map((opt) => (
+              <div key={opt.value} className="flex items-center gap-2">
+                <Checkbox
+                  id={`work-type-${opt.value}`}
+                  checked={(data.preferredWorkTypes || []).includes(opt.value)}
+                  onCheckedChange={(checked) => handleWorkTypeToggle(opt.value, !!checked)}
+                />
+                <Label
+                  htmlFor={`work-type-${opt.value}`}
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  {opt.label}
+                </Label>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -307,25 +360,8 @@ export function JobPreferencesStep({
               }
             />
           </div>
-          </div>
-          <div className="space-y-2">
-            <Label
-              htmlFor="yearsOfExperience"
-              className="flex items-center gap-2"
-            >
-              Years of Experience
-            </Label>
-            <Input
-              id="yearsOfExperience"
-              name="yearsOfExperience"
-              type="number"
-              min={0}
-              placeholder="5"
-              value={data.yearsOfExperience ?? ""}
-              onChange={handleChange}
-            />
-          </div>
         </div>
+      </div>
 
       <div className="flex items-center justify-between pt-4">
         <div className="flex items-center gap-2">

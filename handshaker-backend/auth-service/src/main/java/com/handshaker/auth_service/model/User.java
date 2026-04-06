@@ -11,6 +11,7 @@ public class User {
 
     @Id
     @Column(nullable = false)
+    @GeneratedValue
     private UUID id;
 
     @Column(nullable = false, unique = true)
@@ -26,10 +27,9 @@ public class User {
     private String verificationToken;
     private Instant verificationTokenExpiry;
 
-    protected User(){}
+    public User(){}
 
     public User(String email, String password, String role) {
-        this.id = UUID.randomUUID();
         this.email = email;
         this.password = password;
         this.role = role;
@@ -37,6 +37,10 @@ public class User {
 
     public UUID getId() {
         return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public String getEmail() {
@@ -73,5 +77,17 @@ public class User {
 
     public void setVerificationTokenExpiry(Instant verificationTokenExpiry) {
         this.verificationTokenExpiry = verificationTokenExpiry;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

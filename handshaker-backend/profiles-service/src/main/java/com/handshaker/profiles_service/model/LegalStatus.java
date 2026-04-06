@@ -28,8 +28,10 @@ public class LegalStatus {
 
     private boolean currentlyEmployedInCroatia;
 
+    private boolean workPermitNoExpiration;
+
     @Column(length = 11, unique = true)
-    private String oib;
+    private String oib;//
 
     public LegalStatus() {}
 
@@ -111,5 +113,13 @@ public class LegalStatus {
 
     public void setOib(String oib) {
         this.oib = oib;
+    }
+
+    public boolean isWorkPermitNoExpiration() {
+        return workPermitNoExpiration;
+    }
+
+    public void setWorkPermitNoExpiration(boolean workPermitNoExpiration) {
+        this.workPermitNoExpiration = workPermitNoExpiration;
     }
 }

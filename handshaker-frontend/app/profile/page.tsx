@@ -8,10 +8,12 @@ import { ProfileCompletionBar } from "@/components/profile/completion-bar"
 import { ProfileSection } from "@/components/profile/profile-section"
 import { PersonalInfoSection } from "@/components/profile/personal-info-section"
 import { LegalStatusSection } from "@/components/profile/legal-status-section"
+import { WorkExperienceSection } from "@/components/profile/work-experience-section"
+import { EducationSection } from "@/components/profile/education-section"
 import { JobPreferencesSection } from "@/components/profile/job-preferences-section"
 import { LanguagesSection } from "@/components/profile/languages-section"
 import { AccommodationSection } from "@/components/profile/accommodation-section"
-import { EmploymentCurrentSection } from "@/components/profile/employment-current-section"
+import { DocumentationSection } from "@/components/profile/documentation-section"
 import { fetchProfile } from "@/lib/cv-api"
 import type { UserProfile } from "@/lib/cv-types"
 import { INITIAL_CV_DATA } from "@/lib/cv-types"
@@ -21,8 +23,9 @@ import {
   Briefcase,
   Languages,
   Building,
-  HardHat,
+  FileText,
   Loader2,
+  GraduationCap,
 } from "lucide-react"
 
 export default function ProfilePage() {
@@ -113,6 +116,18 @@ export default function ProfilePage() {
       icon: Shield,
     },
     {
+      id: "workExperience",
+      title: t("profile.sections.workExperience") || "Work Experience",
+      description: t("profile.sections.workExperienceDesc") || "Your work history in Croatia",
+      icon: Briefcase,
+    },
+    {
+      id: "education",
+      title: t("profile.sections.education") || "Education",
+      description: t("profile.sections.educationDesc") || "Your educational background",
+      icon: GraduationCap,
+    },
+    {
       id: "job",
       title: t("profile.sections.jobPreferences"),
       description: t("profile.sections.jobPreferencesDesc"),
@@ -131,10 +146,10 @@ export default function ProfilePage() {
       icon: Building,
     },
     {
-      id: "employment",
-      title: t("profile.sections.employment"),
-      description: t("profile.sections.employmentDesc"),
-      icon: HardHat,
+      id: "documentation",
+      title: t("profile.sections.documentation"),
+      description: t("profile.sections.documentationDesc"),
+      icon: FileText,
     },
   ]
 
@@ -182,6 +197,22 @@ export default function ProfilePage() {
                   }
                 />
               )}
+              {section.id === "workExperience" && (
+                <WorkExperienceSection
+                  data={profile.workExperiences || INITIAL_CV_DATA.workExperience}
+                  onSaved={(data) =>
+                    handleProfileUpdate({ workExperiences: data })
+                  }
+                />
+              )}
+              {section.id === "education" && (
+                <EducationSection
+                  data={profile.education || INITIAL_CV_DATA.education}
+                  onSaved={(data) =>
+                    handleProfileUpdate({ education: data })
+                  }
+                />
+              )}
               {section.id === "job" && (
                 <JobPreferencesSection
                   data={
@@ -208,13 +239,11 @@ export default function ProfilePage() {
                   }
                 />
               )}
-              {section.id === "employment" && (
-                <EmploymentCurrentSection
-                  data={
-                    profile.employmentCurrent || INITIAL_CV_DATA.employmentCurrent
-                  }
+              {section.id === "documentation" && (
+                <DocumentationSection
+                  data={profile.documents || []}
                   onSaved={(data) =>
-                    handleProfileUpdate({ employmentCurrent: data })
+                    handleProfileUpdate({ documents: data })
                   }
                 />
               )}

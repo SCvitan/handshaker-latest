@@ -103,6 +103,9 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY}
     ports:
       - "8080:8080"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
 
   profiles-service:
     build:

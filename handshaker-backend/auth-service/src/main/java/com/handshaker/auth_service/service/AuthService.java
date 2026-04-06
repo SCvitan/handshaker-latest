@@ -158,10 +158,10 @@ public class AuthService {
     private void addJwtCookie(HttpServletResponse response, String token) {
         ResponseCookie cookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
-                .secure(true) // set true in prod
+                .secure(false) // set true in prod
                 .path("/")
                 .maxAge(60 * 60)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());

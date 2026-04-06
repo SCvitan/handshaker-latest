@@ -1,11 +1,13 @@
 "use client"
 
 import type React from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { ArrowLeft, ArrowRight, Home, Shield, Calendar } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ArrowLeft, ArrowRight, Home, Shield, Calendar, AlertCircle } from "lucide-react"
 import type { LegalStatus } from "@/lib/cv-types"
 
 interface LegalStatusStepProps {
@@ -25,19 +27,79 @@ export function LegalStatusStep({
   onSaveAndHome,
   isSaving,
 }: LegalStatusStepProps) {
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const today = new Date().toISOString().split("T")[0]
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    // Date fields should be null when empty
     const dateFields = ["workPermitExpirationDate", "dateOfArrivalInCroatia", "passportExpirationDate"]
+    
+    // Clear error for this field
+    setErrors((prev) => ({ ...prev, [name]: "" }))
+
     if (dateFields.includes(name)) {
       onUpdate({ ...data, [name]: value === "" ? null : value })
+    } else if (name === "oib") {
+      // Only allow digits
+      const digits = value.replace(/\D/g, "").slice(0, 11)
+      onUpdate({ ...data, [name]: digits })
     } else {
       onUpdate({ ...data, [name]: value })
     }
   }
 
   const handleSwitch = (name: keyof LegalStatus, checked: boolean) => {
-    onUpdate({ ...data, [name]: checked })
+    setErrors((prev) => ({ ...prev, [name]: "" }))
+    if (name === "hasCroatianWorkPermit" && !checked) {
+      // Reset expiration fields when turning off work permit
+      onUpdate({ 
+        ...data, 
+        [name]: checked,
+        workPermitExpirationDate: null,
+        workPermitNoExpiration: false 
+      })
+    } else {
+      onUpdate({ ...data, [name]: checked })
+    }
+  }
+
+  const handleNoExpirationChange = (checked: boolean) => {
+    onUpdate({ 
+      ...data, 
+      workPermitNoExpiration: checked,
+      workPermitExpirationDate: checked ? null : data.workPermitExpirationDate
+    })
+  }
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {}
+
+    // Work permit expiration cannot be in the past
+    if (data.hasCroatianWorkPermit && !data.workPermitNoExpiration && data.workPermitExpirationDate) {
+      if (data.workPermitExpirationDate < today) {
+        newErrors.workPermitExpirationDate = "Expiration date cannot be in the past"
+      }
+    }
+
+    // Date of arrival cannot be in the future
+    if (data.dateOfArrivalInCroatia && data.dateOfArrivalInCroatia > today) {
+      newErrors.dateOfArrivalInCroatia = "Arrival date cannot be in the future"
+    }
+
+    // OIB must be exactly 11 digits
+    if (data.oib && data.oib.length !== 11) {
+      newErrors.oib = "OIB must be exactly 11 digits"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleNext = () => {
+    if (validate()) {
+      onNext()
+    }
   }
 
   return (
@@ -72,21 +134,44 @@ export function LegalStatusStep({
         </div>
 
         {data.hasCroatianWorkPermit && (
-          <div className="space-y-2">
-            <Label
-              htmlFor="workPermitExpirationDate"
-              className="flex items-center gap-2"
-            >
-              <Calendar className="size-4 text-muted-foreground" />
-              Work Permit Expiration Date
-            </Label>
-            <Input
-              id="workPermitExpirationDate"
-              name="workPermitExpirationDate"
-              type="date"
-              value={data.workPermitExpirationDate ?? ""}
-              onChange={handleChange}
-            />
+          <div className="space-y-3 pl-4 border-l-2 border-primary/20">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="workPermitNoExpiration"
+                checked={data.workPermitNoExpiration}
+                onCheckedChange={handleNoExpirationChange}
+              />
+              <Label htmlFor="workPermitNoExpiration" className="text-sm font-normal cursor-pointer">
+                No expiration date (Croatian origin / permanent permit)
+              </Label>
+            </div>
+
+            {!data.workPermitNoExpiration && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="workPermitExpirationDate"
+                  className="flex items-center gap-2"
+                >
+                  <Calendar className="size-4 text-muted-foreground" />
+                  Work Permit Expiration Date
+                </Label>
+                <Input
+                  id="workPermitExpirationDate"
+                  name="workPermitExpirationDate"
+                  type="date"
+                  min={today}
+                  value={data.workPermitExpirationDate ?? ""}
+                  onChange={handleChange}
+                  className={errors.workPermitExpirationDate ? "border-destructive" : ""}
+                />
+                {errors.workPermitExpirationDate && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="size-3" />
+                    {errors.workPermitExpirationDate}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -123,13 +208,24 @@ export function LegalStatusStep({
               <Calendar className="size-4 text-muted-foreground" />
               Date of Arrival in Croatia
             </Label>
+            <p className="text-xs text-muted-foreground">
+                Leave empty if you are from Croatia
+              </p>
             <Input
               id="dateOfArrivalInCroatia"
               name="dateOfArrivalInCroatia"
               type="date"
+              max={today}
               value={data.dateOfArrivalInCroatia ?? ""}
               onChange={handleChange}
+              className={errors.dateOfArrivalInCroatia ? "border-destructive" : ""}
             />
+            {errors.dateOfArrivalInCroatia && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertCircle className="size-3" />
+                {errors.dateOfArrivalInCroatia}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label
@@ -139,6 +235,9 @@ export function LegalStatusStep({
               <Calendar className="size-4 text-muted-foreground" />
               Passport Expiration Date
             </Label>
+            <p className="text-xs text-muted-foreground">
+                Skip this if you are from Croatia
+              </p>
             <Input
               id="passportExpirationDate"
               name="passportExpirationDate"
@@ -160,10 +259,24 @@ export function LegalStatusStep({
             maxLength={11}
             value={data.oib}
             onChange={handleChange}
+            className={errors.oib ? "border-destructive" : ""}
           />
-          <p className="text-xs text-muted-foreground">
-            11-digit Croatian personal identification number
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              11-digit Croatian personal identification number
+            </p>
+            {data.oib && (
+              <p className={`text-xs ${data.oib.length === 11 ? "text-green-600" : "text-muted-foreground"}`}>
+                {data.oib.length}/11 digits
+              </p>
+            )}
+          </div>
+          {errors.oib && (
+            <p className="text-xs text-destructive flex items-center gap-1">
+              <AlertCircle className="size-3" />
+              {errors.oib}
+            </p>
+          )}
         </div>
       </div>
 
@@ -187,7 +300,7 @@ export function LegalStatusStep({
             {isSaving ? "Saving..." : "Save & Return Home"}
           </Button>
         </div>
-        <Button onClick={onNext} disabled={isSaving} className="gap-2">
+        <Button onClick={handleNext} disabled={isSaving} className="gap-2">
           {isSaving ? "Saving..." : "Continue"}
           <ArrowRight className="size-4" />
         </Button>

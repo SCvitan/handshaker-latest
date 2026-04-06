@@ -11,9 +11,11 @@ public class ProfileCompletenessCalculator {
     public double calculate(UserProfile profile) {
         double score = 0;
 
-        if (isPersonalComplete(profile)) score += 0.30;
-        if (isLegalComplete(profile.getLegalStatus())) score += 0.25;
-        if (isJobPreferencesComplete(profile.getJobPreferences())) score += 0.25;
+        if (isPersonalComplete(profile)) score += 0.20;
+        if (isLegalComplete(profile.getLegalStatus())) score += 0.20;
+        if (isJobPreferencesComplete(profile.getJobPreferences())) score += 0.15;
+        if (isWorkExperienceComplete(profile.getWorkExperiences())) score += 0.15;
+        if (isEducationComplete(profile.getEducation())) score += 0.10;
         if (areLanguagesComplete(profile.getLanguageSkills())) score += 0.10;
         if (isAccommodationComplete(profile.getAccommodation())) score += 0.10;
 
@@ -35,7 +37,7 @@ public class ProfileCompletenessCalculator {
 
         if (l.getDateOfArrivalInCroatia() == null) return false;
         if (l.getPassportExpirationDate() == null) return false;
-        if (notBlank(l.getOib()) == false) return false;
+        if (!notBlank(l.getOib())) return false;
 
         if (l.isHasCroatianWorkPermit()) {
             return l.getWorkPermitExpirationDate() != null;
@@ -53,6 +55,26 @@ public class ProfileCompletenessCalculator {
                 && j.getDesiredWorkingHoursPerDay() != null
                 && j.getDesiredWorkingDaysPerMonth() != null
                 && j.getExperienceLevel() != null;
+    }
+
+    private boolean isWorkExperienceComplete(List<WorkExperience> experiences) {
+        if (experiences == null || experiences.isEmpty()) return false;
+
+        return experiences.stream().allMatch(e ->
+                notBlank(e.getCompanyName()) &&
+                        notBlank(e.getPosition()) &&
+                        notBlank(e.getYearsOfExperience())
+        );
+    }
+
+    private boolean isEducationComplete(Education e) {
+        if (e == null) return false;
+
+        return notBlank(e.getHighestLevel())
+                && notBlank(e.getSchoolName())
+                && notBlank(e.getTitleAcquired())
+                && notBlank(e.getCountry())
+                && notBlank(e.getDateFinished());
     }
 
     private boolean areLanguagesComplete(List<LanguageSkill> skills) {

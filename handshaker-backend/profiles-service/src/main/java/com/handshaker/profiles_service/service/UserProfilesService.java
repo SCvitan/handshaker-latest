@@ -1,6 +1,7 @@
 package com.handshaker.profiles_service.service;
 
 import com.handshaker.events.UserRegisteredEvent;
+import com.handshaker.profiles_service.enums.DocumentType;
 import com.handshaker.profiles_service.enums.Role;
 import com.handshaker.profiles_service.model.*;
 import com.handshaker.profiles_service.config.RabbitConfig;
@@ -16,6 +17,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -68,9 +70,9 @@ public class UserProfilesService {
         info.setDateOfBirth(req.dateOfBirth());
         info.setGender(req.gender());
         info.setStateOfOrigin(req.stateOfOrigin());
+        info.setCountryOfResidence(req.countryOfResidence());
         info.setMobilePhone(req.mobilePhoneNumber());
         info.setMaritalStatus(req.maritalStatus());
-        info.setNumberOfChildren(req.numberOfChildren());
     }
 
     @Transactional
@@ -87,7 +89,9 @@ public class UserProfilesService {
                 mapPreferences(profile.getJobPreferences()),
                 mapLanguages(profile.getLanguageSkills()),
                 mapAccommodation(profile.getAccommodation()),
-                mapEmploymentCurrent(profile.getEmploymentCurrent()),
+                mapEducation(profile.getEducation()),
+                mapWorkExperiences(profile.getWorkExperiences()),
+                mapDocuments(profile.getDocuments()),
                 completenessCalculator.calculate(profile)
         );
     }
@@ -132,6 +136,46 @@ public class UserProfilesService {
         legal.setPassportExpirationDate(req.passportExpirationDate());
         legal.setPassportAddress(req.passportAddress());
         legal.setOib(req.oib());
+        legal.setWorkPermitNoExpiration(req.workPermitNoExpiration());
+    }
+
+    @Transactional
+    public void updateWorkExperience(UUID userId, WorkExperienceRequest req) {
+
+        UserProfile profile = getProfile(userId);
+
+        profile.getWorkExperiences().clear();
+
+        req.experiences().forEach(dto -> {
+            WorkExperience workExperience = new WorkExperience();
+            workExperience.setProfile(profile);
+            workExperience.setCompanyName(dto.companyName());
+            workExperience.setPosition(dto.position());
+            workExperience.setYearsOfExperience(dto.yearsOfExperience());
+            workExperience.setShortDescription(dto.shortDescription());
+
+            profile.getWorkExperiences().add(workExperience);
+        });
+    }
+
+    @Transactional
+    public void updateEducation(UUID userId, EducationRequest req) {
+
+        UserProfile profile = getProfile(userId);
+
+        Education education = profile.getEducation();
+
+        if (education == null) {
+            education = new Education();
+            education.setProfile(profile);
+            profile.setEducation(education);
+        }
+
+        education.setHighestLevel(req.highestLevel());
+        education.setSchoolName(req.schoolName());
+        education.setTitleAcquired(req.titleAcquired());
+        education.setCountry(req.country());
+        education.setDateFinished(req.dateFinished());
     }
 
     @Transactional
@@ -156,6 +200,11 @@ public class UserProfilesService {
         prefs.setDesiredWorkingDaysPerMonth(req.desiredWorkingDaysPerMonth());
         prefs.setYearsOfExperience(req.yearsOfExperience());
         prefs.setExperienceLevel(req.experienceLevel());
+
+        prefs.getPreferredWorkTypes().clear();
+        if (req.preferredWorkTypes() != null) {
+            prefs.getPreferredWorkTypes().addAll(req.preferredWorkTypes());
+        }
     }
 
     @Transactional
@@ -209,57 +258,20 @@ public class UserProfilesService {
         accommodation.setPeopleInRoom(req.peopleInRoom());
     }
 
+
     @Transactional
-    public void updateEmploymentCurrent(
-            UUID userId,
-            EmploymentCurrentRequest request
-    ) {
-
-        UserProfile profile = getProfile(userId);
-
-        EmploymentCurrent employment = profile.getEmploymentCurrent();
-
-        if (employment == null) {
-            employment = new EmploymentCurrent();
-            employment.setId(profile.getId()); // VERY IMPORTANT for @MapsId
-            employment.setProfile(profile);
-            profile.setEmploymentCurrent(employment);
-        }
-
-        employment.setIndustry(request.industry());
-        employment.setJobTitleInCroatia(request.jobTitleInCroatia());
-        employment.setEmployerName(request.employerName());
-        employment.setEmployerAddress(request.employerAddress());
-        employment.setEmployerContactInfo(request.employerContactInfo());
-        employment.setCityOfWork(request.cityOfWork());
-        employment.setNumberOfPreviousEmployersInCroatia(
-                request.numberOfPreviousEmployersInCroatia()
-        );
-
-        if (request.workAddress() != null) {
-            Address address = employment.getWorkAddress();
-
-            if (address == null) {
-                address = new Address();
-            }
-
-            address.setPostalCode(request.workAddress().postalCode());
-            address.setCity(request.workAddress().city());
-            address.setStreet(request.workAddress().street());
-            address.setHouseNumber(request.workAddress().houseNumber());
-
-            employment.setWorkAddress(address);
-        } else {
-            employment.setWorkAddress(null);
-        }
-    }
-
-    public Page<UserProfileResponse> search(UserProfileSearchRequest request,
-                                            Pageable pageable) {
+    public Page<UserProfileResponse> search(UserProfileSearchRequest request, Pageable pageable) {
 
         Specification<UserProfile> spec = UserProfileSpecifications.build(request);
 
         Page<UserProfile> profiles = repository.findAll(spec, pageable);
+
+        // explicitly fetch collections inside transaction
+        profiles.forEach(profile -> {
+            profile.getLanguageSkills().size();   // initializes languageSkills
+            profile.getWorkExperiences().size();
+            profile.getDocuments().size();
+        });
 
         return profiles.map(this::mapToUserProfileResponse);
     }
@@ -277,20 +289,42 @@ public class UserProfilesService {
         return url;
     }
 
-    private UserProfileResponse mapToUserProfileResponse(UserProfile profile) {
+    @Transactional
+    public DocumentUploadResult uploadDocument(UUID userId, MultipartFile file, DocumentType type) {
 
+        UserProfile profile = getProfile(userId);
+
+        DocumentUploadResult upload = fileStorageService.uploadDocument(userId, file);
+
+        UserDocument doc = new UserDocument();
+        doc.setProfile(profile);
+        doc.setDocumentType(type);
+        doc.setFileUrl(upload.fileUrl());
+        doc.setThumbnailUrl(upload.thumbnailUrl());
+        doc.setPreviewAvailable(upload.previewAvailable());
+        doc.setFileName(file.getOriginalFilename());
+        doc.setContentType(file.getContentType());
+        doc.setFileSize(file.getSize());
+        doc.setUploadedAt(LocalDateTime.now());
+
+        profile.getDocuments().add(doc);
+
+        return upload;
+    }
+
+    private UserProfileResponse mapToUserProfileResponse(UserProfile profile) {
         return new UserProfileResponse(
                 profile.getId(),
                 profile.getEmail(),
                 profile.getProfileImageUrl(),
-
                 mapPersonal(profile.getPersonalInfo(), profile),
                 mapLegal(profile.getLegalStatus()),
                 mapPreferences(profile.getJobPreferences()),
                 mapLanguages(profile.getLanguageSkills()),
                 mapAccommodation(profile.getAccommodation()),
-                mapEmploymentCurrent(profile.getEmploymentCurrent()),
-
+                mapEducation(profile.getEducation()),
+                mapWorkExperiences(profile.getWorkExperiences()),
+                mapDocuments(profile.getDocuments()), // ← add here
                 completenessCalculator.calculate(profile)
         );
     }
@@ -308,50 +342,19 @@ public class UserProfilesService {
         );
     }
 
-
-    /**
-     * Example method to calculate profile completion as a double between 0.0 and 1.0
-     */
-    private double calculateProfileCompletion(UserProfile profile) {
-        int filled = 0;
-        int total = 8;
-
-        if (profile.getPersonalInfo() != null) filled++;
-        if (profile.getLegalStatus() != null) filled++;
-        if (profile.getJobPreferences() != null) filled++;
-        if (profile.getLanguageSkills() != null && !profile.getLanguageSkills().isEmpty()) filled++;
-        if (profile.getAccommodation() != null) filled++;
-        if (profile.getEmploymentCurrent() != null) filled++;
-        if (profile.getEmail() != null && !profile.getEmail().isBlank()) filled++;
-        if (profile.getId() != null) filled++;
-
-        return (double) filled / total;
-    }
-
-
-    private EmploymentCurrentResponse mapEmploymentCurrent(EmploymentCurrent employmentCurrent) {
-
-        AddressResponse addressResponse = null;
-
-        if (employmentCurrent.getWorkAddress() != null) {
-            addressResponse = new AddressResponse(
-                    employmentCurrent.getWorkAddress().getPostalCode(),
-                    employmentCurrent.getWorkAddress().getCity(),
-                    employmentCurrent.getWorkAddress().getStreet(),
-                    employmentCurrent.getWorkAddress().getHouseNumber()
-            );
-        }
-
-        return new EmploymentCurrentResponse(
-                employmentCurrent.getIndustry(),
-                employmentCurrent.getJobTitleInCroatia(),
-                employmentCurrent.getEmployerName(),
-                employmentCurrent.getEmployerAddress(),
-                employmentCurrent.getEmployerContactInfo(),
-                employmentCurrent.getCityOfWork(),
-                employmentCurrent.getNumberOfPreviousEmployersInCroatia(),
-                addressResponse
-        );
+    private List<UserDocumentResponse> mapDocuments(List<UserDocument> documents) {
+        return documents.stream()
+                .map(doc -> new UserDocumentResponse(
+                        doc.getId(),
+                        doc.getDocumentType(),
+                        doc.getFileUrl(),
+                        doc.getThumbnailUrl(),
+                        doc.getFileName(),
+                        doc.getContentType(),
+                        doc.isPreviewAvailable(),
+                        doc.getUploadedAt()
+                ))
+                .toList();
     }
 
     private AccommodationResponse mapAccommodation(Accommodation acc) {
@@ -384,9 +387,9 @@ public class UserProfilesService {
                 info.getDateOfBirth(),
                 info.getGender(),
                 info.getStateOfOrigin(),
+                info.getCountryOfCurrentResidence(),
                 info.getMobilePhone(),
-                info.getMaritalStatus(),
-                info.getNumberOfChildren()
+                info.getMaritalStatus()
         );
     }
 
@@ -398,10 +401,41 @@ public class UserProfilesService {
                 info.getDateOfBirth(),
                 info.getGender(),
                 info.getStateOfOrigin(),
+                info.getCountryOfCurrentResidence(),
                 info.getMobilePhone(),
-                info.getMaritalStatus(),
-                info.getNumberOfChildren()
+                info.getMaritalStatus()
 
+        );
+    }
+
+    private List<WorkExperienceResponse> mapWorkExperiences(List<WorkExperience> experiences) {
+
+        if (experiences == null || experiences.isEmpty()) {
+            return List.of();
+        }
+
+        return experiences.stream()
+                .map(exp -> new WorkExperienceResponse(
+                        exp.getCompanyName(),
+                        exp.getPosition(),
+                        exp.getYearsOfExperience(),
+                        exp.getShortDescription()
+                ))
+                .toList();
+    }
+
+    private EducationResponse mapEducation(Education education) {
+
+        if (education == null) {
+            return null;
+        }
+
+        return new EducationResponse(
+                education.getHighestLevel(),
+                education.getSchoolName(),
+                education.getTitleAcquired(),
+                education.getCountry(),
+                education.getDateFinished()
         );
     }
 
@@ -413,7 +447,8 @@ public class UserProfilesService {
                 legal.isCurrentlyEmployedInCroatia(),
                 legal.getDateOfArrivalInCroatia(),
                 legal.getPassportExpirationDate(),
-                legal.getOib()
+                legal.getOib(),
+                legal.isWorkPermitNoExpiration()
         );
     }
 
@@ -429,7 +464,8 @@ public class UserProfilesService {
                 prefs.getDesiredWorkingHoursPerDay(),
                 prefs.getDesiredWorkingDaysPerMonth(),
                 prefs.getYearsOfExperience(),
-                prefs.getExperienceLevel()
+                prefs.getExperienceLevel(),
+                prefs.getPreferredWorkTypes()
         );
     }
 

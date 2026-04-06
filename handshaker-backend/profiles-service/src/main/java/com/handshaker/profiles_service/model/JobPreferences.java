@@ -1,10 +1,13 @@
 package com.handshaker.profiles_service.model;
 
 import com.handshaker.profiles_service.enums.ExperienceLevel;
-import com.handshaker.profiles_service.enums.Industry;
+import com.handshaker.profiles_service.enums.JobCategory;
+import com.handshaker.profiles_service.enums.WorkType;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -20,7 +23,7 @@ public class JobPreferences {
     private UserProfile profile;
 
     @Enumerated(EnumType.STRING)
-    private Industry desiredIndustry;
+    private JobCategory desiredIndustry;
     private String desiredPosition;
 
     private BigDecimal expectedMonthlyIncome;
@@ -37,7 +40,24 @@ public class JobPreferences {
     @Enumerated(EnumType.STRING)
     private ExperienceLevel experienceLevel;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(
+            name = "job_preferred_work_types",
+            joinColumns = @JoinColumn(name = "profile_id")
+    )
+    @Column(name = "work_type")
+    private List<WorkType> preferredWorkTypes = new ArrayList<>();
+
     public JobPreferences() {}
+
+    public List<WorkType> getPreferredWorkTypes() {
+        return preferredWorkTypes;
+    }
+
+    public void setPreferredWorkTypes(List<WorkType> preferredWorkTypes) {
+        this.preferredWorkTypes = preferredWorkTypes;
+    }
 
     public UUID getId() {
         return id;
@@ -55,11 +75,11 @@ public class JobPreferences {
         this.profile = profile;
     }
 
-    public Industry getDesiredIndustry() {
+    public JobCategory getDesiredIndustry() {
         return desiredIndustry;
     }
 
-    public void setDesiredIndustry(Industry desiredIndustry) {
+    public void setDesiredIndustry(JobCategory desiredIndustry) {
         this.desiredIndustry = desiredIndustry;
     }
 

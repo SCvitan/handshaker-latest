@@ -58,7 +58,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetailSheetProps) {
   if (!profile) return null
 
-  const { personalInfo, legalStatus, jobPreferences, languages, accommodation, employmentCurrent } =
+  const { personalInfo, legalStatus, jobPreferences, languages, accommodation, education, workExperiences } =
     profile
   const completion = Math.round((profile.profileCompletion || 0) * 100)
   const age = personalInfo.dateOfBirth ? calculateAge(personalInfo.dateOfBirth) : null
@@ -136,14 +136,6 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
                   : "-"
               }
             />
-            <Row
-              label="Children"
-              value={
-                typeof personalInfo.numberOfChildren === "number"
-                  ? personalInfo.numberOfChildren
-                  : "-"
-              }
-            />
           </div>
         </section>
 
@@ -197,14 +189,6 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
               value={
                 typeof jobPreferences.expectedMonthlyIncome === "number"
                   ? `EUR ${jobPreferences.expectedMonthlyIncome.toLocaleString()}/mo`
-                  : "-"
-              }
-            />
-            <Row
-              label="Experience"
-              value={
-                typeof jobPreferences.yearsOfExperience === "number"
-                  ? `${jobPreferences.yearsOfExperience} years`
                   : "-"
               }
             />
@@ -328,35 +312,65 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
 
         <Separator className="my-4" />
 
-        {/* Current Employment */}
-        {employmentCurrent.employerName && (
-          <section className="mb-5">
-            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-              <HardHat className="size-4 text-primary" />
-              Current Work
-            </h4>
-            <div className="rounded-md border border-border bg-muted/30 px-3 py-1">
-              <Row label="Job Title" value={employmentCurrent.jobTitleInCroatia} />
-              <Row label="Industry" value={employmentCurrent.industry} />
-              <Row label="Employer" value={employmentCurrent.employerName} />
-              <Row label="Employer Address" value={employmentCurrent.employerAddress} />
-              <Row label="Contact" value={employmentCurrent.employerContactInfo} />
-              <Row label="City of Work" value={employmentCurrent.cityOfWork} />
-              <Row
-                label="Previous Employers"
-                value={employmentCurrent.numberOfPreviousEmployersInCroatia}
-              />
-              <Row
-                label="Work Address"
-                value={
-                  employmentCurrent.workAddress?.street
-                    ? `${employmentCurrent.workAddress.street} ${employmentCurrent.workAddress.houseNumber || ""}, ${employmentCurrent.workAddress.postalCode || ""} ${employmentCurrent.workAddress.city}`
-                    : "-"
-                }
-              />
-            </div>
-          </section>
-        )}
+        {/* Education */}
+        <section className="mb-5">
+          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <HardHat className="size-4 text-primary" />
+            Education
+          </h4>
+          <div className="rounded-md border border-border bg-muted/30 px-3 py-1">
+            <Row
+              label="Highest Level"
+              value={
+                education?.highestLevel
+                  ? education.highestLevel.replace(/_/g, " ").charAt(0) +
+                    education.highestLevel.replace(/_/g, " ").slice(1).toLowerCase()
+                  : "-"
+              }
+            />
+            <Row label="School" value={education?.schoolName} />
+            <Row label="Title Acquired" value={education?.titleAcquired} />
+            <Row label="Country" value={education?.country} />
+            <Row label="Year Finished" value={education?.dateFinished} />
+          </div>
+        </section>
+
+        <Separator className="my-4" />
+
+        {/* Work Experiences */}
+        <section className="mb-5">
+          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Clock className="size-4 text-primary" />
+            Work Experience ({workExperiences?.length || 0})
+          </h4>
+          <div className="space-y-2">
+            {workExperiences && workExperiences.length > 0 ? (
+              workExperiences.map((exp, i) => (
+                <div
+                  key={`${exp.companyName}-${i}`}
+                  className="rounded-md border border-border bg-muted/30 px-3 py-2"
+                >
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">{exp.companyName}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {exp.yearsOfExperience === "LESS_THAN_1"
+                        ? "< 1 yr"
+                        : exp.yearsOfExperience === "5_PLUS"
+                          ? "5+ yrs"
+                          : `${exp.yearsOfExperience} yr${exp.yearsOfExperience !== "1" ? "s" : ""}`}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{exp.position}</p>
+                  {exp.shortDescription && (
+                    <p className="mt-1 text-xs text-muted-foreground/80">{exp.shortDescription}</p>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No work experience listed.</p>
+            )}
+          </div>
+        </section>
       </SheetContent>
     </Sheet>
   )

@@ -8,5 +8,6 @@ public record LegalStatusResponse(
         Boolean currentlyEmployedInCroatia,
         LocalDate dateOfArrivalInCroatia,
         LocalDate passportExpirationDate,
-        String oib
+        String oib,
+        Boolean workPermitNoExpiration
 ) {}

@@ -1,6 +1,7 @@
 package com.handshaker.profiles_service.controller;
 
 import com.handshaker.profiles_service.dto.*;
+import com.handshaker.profiles_service.enums.DocumentType;
 import com.handshaker.profiles_service.service.UserProfilesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,24 @@ public class UserProfileController {
         service.updateLegal(userId, request);
     }
 
+    @PutMapping("/me/work-experience")
+    public void updateWorkExperience(
+            Authentication authentication,
+            @RequestBody WorkExperienceRequest request
+    ) {
+        UUID userId = UUID.fromString(authentication.getPrincipal().toString());
+        service.updateWorkExperience(userId, request);
+    }
+
+    @PutMapping("/me/education")
+    public void updateEducation(
+            Authentication authentication,
+            @RequestBody EducationRequest request
+    ){
+        UUID userId = UUID.fromString(authentication.getPrincipal().toString());
+        service.updateEducation(userId, request);
+    }
+
     @PutMapping("/me/job-preferences")
     public void updateJobPreferences(
             Authentication authentication,
@@ -77,16 +96,6 @@ public class UserProfileController {
         service.updateAccommodation(userId, request);
     }
 
-    @PutMapping("/me/employment-current")
-    public void  updateEmploymentCurrent(
-            Authentication authentication,
-            @RequestBody EmploymentCurrentRequest request
-    ) {
-        UUID userId = UUID.fromString(authentication.getPrincipal().toString());
-        service.updateEmploymentCurrent(userId, request);
-
-    }
-
     @PostMapping("/search")
     public Page<UserProfileResponse> searchProfiles(
             @RequestBody UserProfileSearchRequest request,
@@ -103,6 +112,16 @@ public class UserProfileController {
         log.info("AUTH: " + auth);
         UUID userId = UUID.fromString(auth.getPrincipal().toString());
         return service.uploadProfileImage(userId, file);
+    }
+
+    @PostMapping("/me/documents")
+    public DocumentUploadResult uploadDocument(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("type") DocumentType type
+    ) {
+        UUID userId = UUID.fromString(authentication.getPrincipal().toString());
+        return service.uploadDocument(userId, file, type);
     }
 
 }

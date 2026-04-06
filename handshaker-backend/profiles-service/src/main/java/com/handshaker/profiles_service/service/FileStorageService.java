@@ -1,5 +1,6 @@
 package com.handshaker.profiles_service.service;
 
+import com.handshaker.profiles_service.dto.DocumentUploadResult;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.geometry.Positions;
 import org.slf4j.Logger;
@@ -66,6 +67,98 @@ public class FileStorageService {
         log.info("Profile picture uploaded to R2");
 
         return publicUrl + "/" + "handshaker" + "/" + key;
+    }
+
+    public DocumentUploadResult uploadDocument(UUID userId, MultipartFile file) {
+
+        validateDocument(file);
+
+        boolean isImage = isImage(file);
+
+        String key = "documents/" + userId + "/" + UUID.randomUUID() + "-" + file.getOriginalFilename();
+
+        try {
+
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(file.getContentType())
+                    .build();
+
+            s3Client.putObject(
+                    request,
+                    RequestBody.fromInputStream(
+                            file.getInputStream(),
+                            file.getSize()
+                    )
+            );
+
+            String thumbnailUrl = null;
+
+            if (isImage) {
+                thumbnailUrl = uploadThumbnail(userId, file);
+            }
+
+            return new DocumentUploadResult(
+                    publicUrl + "/handshaker/" + key,
+                    thumbnailUrl,
+                    isImage
+            );
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload document", e);
+        }
+    }
+
+    private String uploadThumbnail(UUID userId, MultipartFile file) throws IOException {
+
+        String key = "documents/" + userId + "/thumb-" + UUID.randomUUID() + ".jpg";
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        Thumbnails.of(file.getInputStream())
+                .size(200, 200)
+                .crop(Positions.CENTER)
+                .outputFormat("jpg")
+                .outputQuality(0.8)
+                .toOutputStream(outputStream);
+
+        byte[] thumbnail = outputStream.toByteArray();
+
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .contentType("image/jpeg")
+                .build();
+
+        s3Client.putObject(
+                request,
+                RequestBody.fromBytes(thumbnail)
+        );
+
+        return publicUrl + "/handshaker/" + key;
+    }
+
+    private void validateDocument(MultipartFile file) {
+
+        if (file.getContentType() == null) {
+            throw new RuntimeException("Invalid file");
+        }
+
+        if (!file.getContentType().startsWith("image/")
+                && !file.getContentType().equals("application/pdf")) {
+
+            throw new RuntimeException("Only images and PDFs allowed");
+        }
+
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new RuntimeException("File too large (10MB max)");
+        }
+    }
+
+    private boolean isImage(MultipartFile file) {
+        return file.getContentType() != null &&
+                file.getContentType().startsWith("image/");
     }
 
 }

@@ -22,11 +22,10 @@ function calculateAge(dateOfBirth: string): number {
 }
 
 export function ProfileCard({ profile, onClick }: ProfileCardProps) {
-  const { personalInfo, jobPreferences, languages, legalStatus, accommodation, employmentCurrent } =
-    profile
+  const { personalInfo, jobPreferences, languages, legalStatus, accommodation } = profile
   const completion = Math.round((profile.profileCompletion || 0) * 100)
   const age = personalInfo.dateOfBirth ? calculateAge(personalInfo.dateOfBirth) : null
-  const city = accommodation.address?.city || employmentCurrent?.cityOfWork || ""
+  const city = accommodation?.address?.city || ""
   const initials =
     personalInfo.firstName && personalInfo.lastName
       ? `${personalInfo.firstName[0]}${personalInfo.lastName[0]}`.toUpperCase()
@@ -100,11 +99,11 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
 
         {/* Tags row */}
         <div className="flex flex-wrap gap-1.5">
-          {/* Experience */}
-          {jobPreferences.yearsOfExperience !== null && (
+          {/* Work Experiences count */}
+          {profile.workExperiences && profile.workExperiences.length > 0 && (
             <Badge variant="secondary" className="text-xs font-normal">
               <Clock className="mr-1 size-3" />
-              {jobPreferences.yearsOfExperience} yrs exp
+              {profile.workExperiences.length} job{profile.workExperiences.length !== 1 && "s"}
             </Badge>
           )}
 
@@ -130,6 +129,12 @@ export function ProfileCard({ profile, onClick }: ProfileCardProps) {
             jobPreferences.expectedMonthlyIncome > 0 && (
               <Badge variant="outline" className="text-xs font-normal">
                 EUR {jobPreferences.expectedMonthlyIncome.toLocaleString()}/mo
+              </Badge>
+            )}
+          {typeof jobPreferences.expectedHourlyPay === "number" &&
+            jobPreferences.expectedHourlyPay > 0 && (
+              <Badge variant="outline" className="text-xs font-normal">
+                EUR {jobPreferences.expectedHourlyPay}/hr
               </Badge>
             )}
         </div>

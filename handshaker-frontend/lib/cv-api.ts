@@ -6,10 +6,13 @@ import type {
   Accommodation,
   UserProfile,
   EmploymentCurrent,
+  WorkExperience,
+  Education,
+  DocumentItem,
 } from "./cv-types"
 
-const API_BASE = "https://croworker.app"
-//const API_BASE = "http://localhost:8083"
+//const API_BASE = "http://142.132.181.45:8083"
+const API_BASE = "http://localhost:8083/api"
 
 /**
  * Authenticated fetch
@@ -39,7 +42,7 @@ async function authFetch(url: string, options: RequestInit = {}) {
 }
 
 export async function fetchProfile(): Promise<UserProfile> {
-  const res = await authFetch(`${API_BASE}/api/users/me`)
+  const res = await authFetch(`${API_BASE}/users/me`)
   const json = await res.json()
   // Server returns "employmentCurrentResponse", remap to our type
   if (json.employmentCurrentResponse && !json.employmentCurrent) {
@@ -50,7 +53,7 @@ export async function fetchProfile(): Promise<UserProfile> {
 }
 
 export async function savePersonalInfo(data: PersonalInfo) {
-  return authFetch(`${API_BASE}/api/users/me/personal`, {
+  return authFetch(`${API_BASE}/users/me/personal`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
@@ -66,7 +69,7 @@ export async function uploadProfilePicture(file: File): Promise<string> {
   const formData = new FormData()
   formData.append("file", file)
 
-  const res = await fetch(`${API_BASE}/api/users/me/profile-image`, {
+  const res = await fetch(`${API_BASE}/users/me/profile-image`, {
     method: "POST",
     credentials: "include",
     body: formData,
@@ -87,45 +90,108 @@ export async function uploadProfilePicture(file: File): Promise<string> {
   }
 }
 
+export async function saveWorkExperience(experiences: WorkExperience[]) {
+  return authFetch(`${API_BASE}/users/me/work-experience`, {
+    method: "PUT",
+    body: JSON.stringify({ experiences }),
+  })
+}
+
+export async function saveEducation(data: Education) {
+  return authFetch(`${API_BASE}/users/me/education`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  })
+}
+
 export async function saveLegalStatus(data: LegalStatus) {
-  return authFetch(`${API_BASE}/api/users/me/legal`, {
+  return authFetch(`${API_BASE}/users/me/legal`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveJobPreferences(data: JobPreferences) {
-  return authFetch(`${API_BASE}/api/users/me/job-preferences`, {
+  return authFetch(`${API_BASE}/users/me/job-preferences`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveLanguages(data: Language[]) {
-  return authFetch(`${API_BASE}/api/users/me/languages`, {
+  return authFetch(`${API_BASE}/users/me/languages`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveAccommodation(data: Accommodation) {
-  return authFetch(`${API_BASE}/api/users/me/accommodation`, {
+  return authFetch(`${API_BASE}/users/me/accommodation`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
 export async function saveEmploymentCurrent(data: EmploymentCurrent) {
-  return authFetch(`${API_BASE}/api/users/me/employment-current`, {
+  return authFetch(`${API_BASE}/users/me/employment-current`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
 }
 
+export interface DocumentUploadResult {
+  fileUrl: string
+  thumbnailUrl: string | null
+  previewAvailable: boolean
+}
+
+/**
+ * Upload document file to backend
+ * Endpoint: POST /users/me/documents
+ * Format: multipart/form-data with "file" and "type" fields
+ * type: WORK_PERMIT, PASSPORT, RESIDENCE_CARD, PAY_SLIP, OTHER
+ * Returns: DocumentUploadResult object
+ */
+export async function uploadDocument(
+  type: "WORK_PERMIT" | "PASSPORT" | "RESIDENCE_CARD" | "PAY_SLIP" | "OTHER",
+  file: File
+): Promise<DocumentUploadResult & { type: typeof type; fileName: string }> {
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("type", type)
+
+  const res = await fetch(`${API_BASE}/users/me/documents`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  })
+
+  if (!res.ok) {
+    throw new Error(`Failed to upload ${type}`)
+  }
+
+  const result: DocumentUploadResult = await res.json()
+  return {
+    ...result,
+    type,
+    fileName: file.name,
+  }
+}
+
+/**
+ * Delete a document
+ * Endpoint: DELETE /users/me/documents/{id}
+ */
+export async function deleteDocument(documentId: string): Promise<void> {
+  await authFetch(`${API_BASE}/users/me/documents/${documentId}`, {
+    method: "DELETE",
+  })
+}
+
 // ── Company endpoints (port 8082) ──
 
-// const COMPANY_API_BASE = "http://localhost:8082"
-const COMPANY_API_BASE = "https://croworker.app"
+const COMPANY_API_BASE = "http://localhost:8082/api"
+//const COMPANY_API_BASE = "http://142.132.181.45:8082"
 
 export interface CompanyProfile {
   id: string
@@ -149,7 +215,7 @@ export async function fetchCompanyProfile(): Promise<CompanyProfile> {
 }
 
 export async function saveCompanyProfile(data: CompanyProfileUpdate) {
-  return authFetch(`${COMPANY_API_BASE}/api/companies/me`, {
+  return authFetch(`${COMPANY_API_BASE}/companies/me`, {
     method: "PUT",
     body: JSON.stringify(data),
   })
@@ -197,21 +263,12 @@ export async function searchProfiles(
   size = 20,
 ): Promise<ProfileSearchResponse> {
   const res = await authFetch(
-    `${API_BASE}/api/users/search?page=${page}&size=${size}`,
+    `${API_BASE}/users/search?page=${page}&size=${size}`,
     {
       method: "POST",
       body: JSON.stringify(filters),
     },
   )
   const json = await res.json()
-  // Remap employmentCurrentResponse -> employmentCurrent in each profile
-  if (json.content) {
-    for (const profile of json.content) {
-      if (profile.employmentCurrentResponse && !profile.employmentCurrent) {
-        profile.employmentCurrent = profile.employmentCurrentResponse
-        delete profile.employmentCurrentResponse
-      }
-    }
-  }
   return json as ProfileSearchResponse
 }

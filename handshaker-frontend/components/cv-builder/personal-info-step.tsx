@@ -39,9 +39,7 @@ export function PersonalInfoStep({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { name, value } = e.target
-    if (name === "numberOfChildren") {
-      onUpdate({ ...data, [name]: value === "" ? null : Number(value) })
-    } else if (name === "dateOfBirth") {
+    if (name === "dateOfBirth") {
       onUpdate({ ...data, [name]: value === "" ? null : value })
     } else {
       onUpdate({ ...data, [name]: value })
@@ -52,7 +50,7 @@ export function PersonalInfoStep({
     onUpdate({ ...data, [name]: value })
   }
 
-  const isValid = data.firstName && data.lastName && data.dateOfBirth && data.gender && data.mobilePhoneNumber
+  const isValid = data.firstName && data.lastName && data.dateOfBirth && data.gender && data.mobilePhoneNumber && data.countryOfResidence
 
   return (
     <div className="space-y-6">
@@ -147,7 +145,7 @@ export function PersonalInfoStep({
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Globe className="size-4 text-muted-foreground" />
-              State of Origin
+              Country of Origin
             </Label>
             <Select
               value={data.stateOfOrigin ?? ""}
@@ -165,6 +163,30 @@ export function PersonalInfoStep({
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Globe className="size-4 text-muted-foreground" />
+              Country of Current Residence *
+            </Label>
+            <Select
+              value={data.countryOfResidence ?? ""}
+              onValueChange={(v) => handleSelect("countryOfResidence", v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="mobilePhoneNumber" className="flex items-center gap-2">
               <Phone className="size-4 text-muted-foreground" />
@@ -199,18 +221,6 @@ export function PersonalInfoStep({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="numberOfChildren">Number of Children</Label>
-            <Input
-              id="numberOfChildren"
-              name="numberOfChildren"
-              type="number"
-              min={0}
-              placeholder="0"
-              value={data.numberOfChildren ?? ""}
-              onChange={handleChange}
-            />
           </div>
         </div>
       </div>

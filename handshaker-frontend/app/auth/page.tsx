@@ -50,9 +50,32 @@ export default function AuthPage() {
     }
   }, [searchParams])
 
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8) {
+      return "Password must be at least 8 characters long"
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      return "Password must contain at least one uppercase letter"
+    }
+    if (!/[0-9]/.test(pwd)) {
+      return "Password must contain at least one number"
+    }
+    return null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+
+    // Validate password on register
+    if (mode === "register") {
+      const pwdError = validatePassword(password)
+      if (pwdError) {
+        setError(pwdError)
+        return
+      }
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -226,6 +249,11 @@ export default function AuthPage() {
                   required
                   autoComplete={mode === "login" ? "current-password" : "new-password"}
                 />
+                {mode === "register" && (
+                  <p className="text-xs text-muted-foreground">
+                    At least 8 characters, one uppercase letter, and one number
+                  </p>
+                )}
               </div>
             )}
 

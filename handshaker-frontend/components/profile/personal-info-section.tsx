@@ -38,9 +38,7 @@ export function PersonalInfoSection({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    if (name === "numberOfChildren") {
-      setData({ ...data, [name]: value === "" ? null : Number(value) })
-    } else if (name === "dateOfBirth") {
+    if (name === "dateOfBirth") {
       setData({ ...data, [name]: value === "" ? null : value })
     } else {
       setData({ ...data, [name]: value })
@@ -189,17 +187,6 @@ export function PersonalInfoSection({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="p-numberOfChildren">Number of Children</Label>
-          <Input
-            id="p-numberOfChildren"
-            name="numberOfChildren"
-            type="number"
-            min={0}
-            value={data.numberOfChildren ?? ""}
-            onChange={handleChange}
-          />
         </div>
       </div>
 

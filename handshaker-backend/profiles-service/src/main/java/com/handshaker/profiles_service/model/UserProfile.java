@@ -38,6 +38,15 @@ public class UserProfile {
     @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     private EmploymentCurrent employmentCurrent;
 
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WorkExperience> workExperiences = new ArrayList<>();
+
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Education education;
+
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserDocument> documents = new ArrayList<>();
+
     public UserProfile(UUID id, String email, PersonalInfo personalInfo, LegalStatus legalStatus, JobPreferences jobPreferences, List<LanguageSkill> languageSkills, Accommodation accommodation, EmploymentCurrent employmentCurrent, String profileImageUrl) {
         this.id = id;
         this.email = email;
@@ -48,6 +57,14 @@ public class UserProfile {
         this.accommodation = accommodation;
         this.employmentCurrent = employmentCurrent;
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public List<UserDocument> getDocuments() {
+        return documents;
+    }
+
+    public void setDocuments(List<UserDocument> documents) {
+        this.documents = documents;
     }
 
     public UUID getId() {
@@ -120,6 +137,22 @@ public class UserProfile {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public List<WorkExperience> getWorkExperiences() {
+        return workExperiences;
+    }
+
+    public void setWorkExperiences(List<WorkExperience> workExperiences) {
+        this.workExperiences = workExperiences;
+    }
+
+    public Education getEducation() {
+        return education;
+    }
+
+    public void setEducation(Education education) {
+        this.education = education;
     }
 
     public static UserProfile create(UUID id, String email) {

@@ -1,12 +1,14 @@
 package com.handshaker.profiles_service.dto;
 
 import com.handshaker.profiles_service.enums.ExperienceLevel;
-import com.handshaker.profiles_service.enums.Industry;
+import com.handshaker.profiles_service.enums.JobCategory;
+import com.handshaker.profiles_service.enums.WorkType;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record JobPreferencesResponse(
-        Industry desiredIndustry,
+        JobCategory desiredIndustry,
         String desiredPosition,
         BigDecimal expectedMonthlyIncome,
         BigDecimal expectedHourlyPay,
@@ -15,5 +17,6 @@ public record JobPreferencesResponse(
         Integer desiredWorkingHoursPerDay,
         Integer desiredWorkingDaysPerMonth,
         Integer yearsOfExperience,
-        ExperienceLevel experienceLevel
+        ExperienceLevel experienceLevel,
+        List<WorkType> preferredWorkTypes
 ) {}
