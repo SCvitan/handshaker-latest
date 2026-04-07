@@ -10,7 +10,8 @@
     "logOut": "Log out",
     "account": "Account",
     "companyAccount": "Company Account",
-    "userAccount": "User Account"
+    "userAccount": "User Account",
+    "myJobs":"My Jobs"
   },
   "landing": {
     "badge": "Build your professional CV in minutes",

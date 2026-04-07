@@ -353,3 +353,29 @@ export const WORK_TYPE_OPTIONS = [
   { value: "PART_TIME", label: "Part-time" },
   { value: "SEASONAL", label: "Seasonal work" },
 ] as const
+
+// Job Ad types
+export interface JobAd {
+  id: string
+  industry: string
+  position: string
+  description: string
+  location: {
+    street: string
+    streetNumber: string
+    city: string
+    postalCode: string
+    country: string
+  }
+  workType: "FULL_TIME" | "PART_TIME" | "SEASONAL"
+  salaryType: "MONTHLY" | "HOURLY"
+  salaryAmount: number
+  workingHoursPerDay: number
+  workingDaysPerMonth: number
+  accommodationProvided: boolean
+  transportationProvided: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type JobAdCreate = Omit<JobAd, "id" | "createdAt" | "updatedAt">

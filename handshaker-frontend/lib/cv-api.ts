@@ -203,8 +203,12 @@ export interface CompanyProfile {
   website: string
   address: string
   city: string
+  postalCode: string
   country: string
   companySize: string
+  oib: string
+  bankAccount: string
+  logoUrl: string | null
 }
 
 export type CompanyProfileUpdate = Omit<CompanyProfile, "id" | "email">
@@ -219,6 +223,18 @@ export async function saveCompanyProfile(data: CompanyProfileUpdate) {
     method: "PUT",
     body: JSON.stringify(data),
   })
+}
+
+export async function uploadCompanyLogo(file: File): Promise<{ logoUrl: string }> {
+  const formData = new FormData()
+  formData.append("file", file)
+  const res = await fetch(`${COMPANY_API_BASE}/companies/me/logo`, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  })
+  if (!res.ok) throw new Error("Failed to upload logo")
+  return res.json()
 }
 
 // ── Profile search endpoint (port 8083) ──
@@ -271,4 +287,35 @@ export async function searchProfiles(
   )
   const json = await res.json()
   return json as ProfileSearchResponse
+}
+
+// ── Job Ad endpoints (company) ──
+
+import type { JobAd, JobAdCreate } from "./cv-types"
+
+export async function fetchCompanyJobs(): Promise<JobAd[]> {
+  const res = await authFetch(`${COMPANY_API_BASE}/companies/me/jobs`)
+  return res.json()
+}
+
+export async function createJobAd(data: JobAdCreate): Promise<JobAd> {
+  const res = await authFetch(`${COMPANY_API_BASE}/companies/me/jobs`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+  return res.json()
+}
+
+export async function updateJobAd(id: string, data: JobAdCreate): Promise<JobAd> {
+  const res = await authFetch(`${COMPANY_API_BASE}/companies/me/jobs/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  })
+  return res.json()
+}
+
+export async function deleteJobAd(id: string): Promise<void> {
+  await authFetch(`${COMPANY_API_BASE}/companies/me/jobs/${id}`, {
+    method: "DELETE",
+  })
 }

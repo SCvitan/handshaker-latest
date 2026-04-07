@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { FileText, LogOut, User, ChevronDown, Building2, Search, Globe, Settings } from "lucide-react"
+import { FileText, LogOut, User, ChevronDown, Building2, Search, Globe, Settings, Briefcase } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
 
@@ -60,6 +60,12 @@ export function Navbar() {
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t("nav.companyProfile")}
+              </Link>
+              <Link
+                href="/my-jobs"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {t("nav.myJobs") || "My Jobs"}
               </Link>
               <Link
                 href="/search-profiles"
@@ -135,6 +141,13 @@ export function Navbar() {
                     >
                       <Building2 className="mr-2 size-4" />
                       {t("nav.companyProfile")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/my-jobs")}
+                      className="cursor-pointer"
+                    >
+                      <Briefcase className="mr-2 size-4" />
+                      {t("nav.myJobs") || "My Jobs"}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => router.push("/search-profiles")}
