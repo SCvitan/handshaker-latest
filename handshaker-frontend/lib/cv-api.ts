@@ -244,6 +244,7 @@ export interface ProfileSearchRequest {
   gender?: string
   maritalStatus?: string
   stateOfOrigin?: string
+  countryOfResidence?: string
   minAge?: number
   maxAge?: number
   hasWorkPermit?: boolean

@@ -14,7 +14,7 @@ import {
 import { ArrowRight, Home, User, Phone, Globe, Calendar } from "lucide-react"
 import { ProfilePictureUpload } from "@/components/profile-picture-upload"
 import type { PersonalInfo } from "@/lib/cv-types"
-import { GENDER_OPTIONS, MARITAL_STATUS_OPTIONS, COUNTRIES } from "@/lib/cv-types"
+import { GENDER_OPTIONS, COUNTRIES } from "@/lib/cv-types"
 
 interface PersonalInfoStepProps {
   data: PersonalInfo
@@ -203,26 +203,7 @@ export function PersonalInfoStep({
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">Marital Status</Label>
-            <Select
-              value={data.maritalStatus ?? ""}
-              onValueChange={(v) => handleSelect("maritalStatus", v)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                {MARITAL_STATUS_OPTIONS.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s.charAt(0) + s.slice(1).toLowerCase()}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+
       </div>
 
       <div className="flex justify-between pt-4">

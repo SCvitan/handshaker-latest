@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -13,10 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Save, Loader2 } from "lucide-react"
+import { Save, Loader2, Clock } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { JobPreferences } from "@/lib/cv-types"
-import { EXPERIENCE_LEVEL_OPTIONS, INDUSTRIES, POSITION_OPTIONS } from "@/lib/cv-types"
+import { EXPERIENCE_LEVEL_OPTIONS, INDUSTRIES, POSITION_OPTIONS, WORK_TYPE_OPTIONS } from "@/lib/cv-types"
 import { saveJobPreferences } from "@/lib/cv-api"
 
 interface JobPreferencesSectionProps {
@@ -61,7 +62,8 @@ export function JobPreferencesSection({
   const handleSwitch = (name: keyof JobPreferences, checked: boolean) => {
     setData({ ...data, [name]: checked })
   }
-
+  
+  
   const formatLevel = (level: string) =>
     level
       .split("_")
@@ -80,6 +82,15 @@ export function JobPreferencesSection({
       setMessage("Failed to save. Please try again.")
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleWorkTypeToggle = (type: string, checked: boolean) => {
+    const currentTypes = data.preferredWorkTypes || []
+    if (checked) {
+      setData({ ...data, preferredWorkTypes: [...currentTypes, type] })
+    } else {
+      setData({ ...data, preferredWorkTypes: currentTypes.filter((t) => t !== type) })
     }
   }
 
@@ -131,6 +142,34 @@ export function JobPreferencesSection({
           )}
         </div>
       </div>
+
+      {/* Preferred Work Type - Multiple Selection */}
+      <div className="space-y-3">
+          <Label className="flex items-center gap-2">
+            <Clock className="size-4 text-muted-foreground" />
+            Preferred Work Type
+          </Label>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Select all that apply
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {WORK_TYPE_OPTIONS.map((opt) => (
+              <div key={opt.value} className="flex items-center gap-2">
+                <Checkbox
+                  id={`work-type-${opt.value}`}
+                  checked={(data.preferredWorkTypes || []).includes(opt.value)}
+                  onCheckedChange={(checked) => handleWorkTypeToggle(opt.value, !!checked)}
+                />
+                <Label
+                  htmlFor={`work-type-${opt.value}`}
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  {opt.label}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">

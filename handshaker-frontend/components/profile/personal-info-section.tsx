@@ -12,10 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Save, Loader2 } from "lucide-react"
+import { Save, Loader2, Globe } from "lucide-react"
 import { ProfilePictureUpload } from "@/components/profile-picture-upload"
 import type { PersonalInfo } from "@/lib/cv-types"
-import { GENDER_OPTIONS, MARITAL_STATUS_OPTIONS, COUNTRIES } from "@/lib/cv-types"
+import { GENDER_OPTIONS, COUNTRIES } from "@/lib/cv-types"
 import { savePersonalInfo } from "@/lib/cv-api"
 
 interface PersonalInfoSectionProps {
@@ -158,6 +158,27 @@ export function PersonalInfoSection({
           </Select>
         </div>
         <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Globe className="size-4 text-muted-foreground" />
+              Country of Current Residence *
+            </Label>
+            <Select
+              value={data.countryOfResidence ?? ""}
+              onValueChange={(v) => handleSelect("countryOfResidence", v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        <div className="space-y-2">
           <Label htmlFor="p-mobilePhoneNumber">Mobile Phone</Label>
           <Input
             id="p-mobilePhoneNumber"
@@ -169,26 +190,7 @@ export function PersonalInfoSection({
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Marital Status</Label>
-          <Select
-            value={data.maritalStatus ?? ""}
-            onValueChange={(v) => handleSelect("maritalStatus", v)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {MARITAL_STATUS_OPTIONS.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s.charAt(0) + s.slice(1).toLowerCase()}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+
 
       <div className="flex items-center justify-between pt-2">
         {message && (

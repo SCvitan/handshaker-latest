@@ -22,10 +22,11 @@ import { User, Shield, Briefcase, Languages, MapPin, CircleCheck } from "lucide-
 import type { SearchFilters } from "./search-profiles-view"
 import {
   GENDER_OPTIONS,
-  MARITAL_STATUS_OPTIONS,
   EXPERIENCE_LEVEL_OPTIONS,
   LANGUAGE_OPTIONS,
   INDUSTRIES,
+  COUNTRIES,
+  POSITION_OPTIONS,
 } from "@/lib/cv-types"
 
 interface FilterSidebarProps {
@@ -39,7 +40,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
   }
 
   const toggleArrayItem = (
-    key: "gender" | "maritalStatus" | "experienceLevel" | "languages",
+    key: "gender" | "experienceLevel" | "languages",
     value: string
   ) => {
     const current = filters[key] as string[]
@@ -82,31 +83,46 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
               </div>
             </div>
 
-            {/* Marital Status */}
-            <div>
-              <Label className="mb-2 block text-xs font-medium text-muted-foreground">Marital Status</Label>
-              <div className="flex flex-col gap-2">
-                {MARITAL_STATUS_OPTIONS.map((s) => (
-                  <label key={s} className="flex cursor-pointer items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={filters.maritalStatus.includes(s)}
-                      onCheckedChange={() => toggleArrayItem("maritalStatus", s)}
-                    />
-                    {s.charAt(0) + s.slice(1).toLowerCase()}
-                  </label>
-                ))}
-              </div>
-            </div>
-
             {/* State of Origin */}
             <div>
               <Label className="mb-1.5 block text-xs font-medium text-muted-foreground">State of Origin</Label>
-              <Input
-                placeholder="e.g. Croatia"
-                value={filters.stateOfOrigin}
-                onChange={(e) => update({ stateOfOrigin: e.target.value })}
-                className="h-8 text-sm"
-              />
+              <Select
+                value={filters.stateOfOrigin || "ALL"}
+                onValueChange={(v) => update({ stateOfOrigin: v === "ALL" ? "" : v })}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Any country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Any</SelectItem>
+                  {COUNTRIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* State of Residence */}
+            <div>
+              <Label className="mb-1.5 block text-xs font-medium text-muted-foreground">State of Residence</Label>
+              <Select
+                value={filters.countryOfResidence || "ALL"}
+                onValueChange={(v) => update({ countryOfResidence: v === "ALL" ? "" : v })}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Any country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Any</SelectItem>
+                  {COUNTRIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Age Range */}
@@ -211,12 +227,30 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
             </div>
             <div>
               <Label className="mb-1.5 block text-xs font-medium text-muted-foreground">Position</Label>
-              <Input
-                placeholder="e.g. Driver"
-                value={filters.position}
-                onChange={(e) => update({ position: e.target.value })}
-                className="h-8 text-sm"
-              />
+              {filters.industry ? (
+                <Select
+                  value={filters.position || "ALL"}
+                  onValueChange={(v) => update({ position: v === "ALL" ? "" : v })}
+                >
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder="Any position" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Any</SelectItem>
+                    {(POSITION_OPTIONS[filters.industry as keyof typeof POSITION_OPTIONS] || []).map(
+                      (position) => (
+                        <SelectItem key={position} value={position}>
+                          {position}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="h-8 flex items-center px-3 text-xs text-muted-foreground rounded-md border border-dashed">
+                  Select an industry first
+                </div>
+              )}
             </div>
 
             {/* Experience Level */}

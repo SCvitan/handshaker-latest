@@ -126,16 +126,8 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
             />
             <Row label="Date of Birth" value={formatDate(personalInfo.dateOfBirth)} />
             <Row label="State of Origin" value={personalInfo.stateOfOrigin} />
+            <Row label="State of Current Residence" value={personalInfo.countryOfResidence} />
             <Row label="Phone" value={personalInfo.mobilePhoneNumber} />
-            <Row
-              label="Marital Status"
-              value={
-                personalInfo.maritalStatus
-                  ? personalInfo.maritalStatus.charAt(0) +
-                    personalInfo.maritalStatus.slice(1).toLowerCase()
-                  : "-"
-              }
-            />
           </div>
         </section>
 
@@ -185,11 +177,23 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
             <Row label="Industry" value={jobPreferences.desiredIndustry} />
             <Row label="Position" value={jobPreferences.desiredPosition} />
             <Row
+              label="Work Type"
+              value={
+                jobPreferences.preferredWorkTypes && jobPreferences.preferredWorkTypes.length > 0
+                  ? jobPreferences.preferredWorkTypes
+                      .map((t) => t.replace(/_/g, " ").charAt(0) + t.replace(/_/g, " ").slice(1).toLowerCase())
+                      .join(", ")
+                  : "-"
+              }
+            />
+            <Row
               label="Expected Income"
               value={
                 typeof jobPreferences.expectedMonthlyIncome === "number"
                   ? `EUR ${jobPreferences.expectedMonthlyIncome.toLocaleString()}/mo`
-                  : "-"
+                  : typeof jobPreferences.expectedHourlyPay === "number"
+                    ? `EUR ${jobPreferences.expectedHourlyPay}/hr`
+                    : "-"
               }
             />
             <Row

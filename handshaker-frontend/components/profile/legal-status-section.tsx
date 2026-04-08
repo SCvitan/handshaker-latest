@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Save, Loader2 } from "lucide-react"
+import { Save, Loader2, Calendar } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 import type { LegalStatus } from "@/lib/cv-types"
 import { saveLegalStatus } from "@/lib/cv-api"
 
@@ -71,17 +72,39 @@ export function LegalStatusSection({
       </div>
 
       {data.hasCroatianWorkPermit && (
-        <div className="space-y-2">
-          <Label htmlFor="p-workPermitExp">
-            Work Permit Expiration Date
-          </Label>
-          <Input
-            id="p-workPermitExp"
-            name="workPermitExpirationDate"
-            type="date"
-            value={data.workPermitExpirationDate ?? ""}
-            onChange={handleChange}
-          />
+        <div className="space-y-3 pl-4 border-l-2 border-primary/20">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="p-workPermitNoExpiration"
+              checked={data.workPermitNoExpiration}
+              onCheckedChange={(checked) => {
+                setData({ 
+                  ...data, 
+                  workPermitNoExpiration: !!checked,
+                  workPermitExpirationDate: checked ? null : data.workPermitExpirationDate
+                })
+              }}
+            />
+            <Label htmlFor="p-workPermitNoExpiration" className="text-sm font-normal cursor-pointer">
+              No expiration date (Croatian origin / permanent permit)
+            </Label>
+          </div>
+
+          {!data.workPermitNoExpiration && (
+            <div className="space-y-2">
+              <Label htmlFor="p-workPermitExp" className="flex items-center gap-2">
+                <Calendar className="size-4 text-muted-foreground" />
+                Work Permit Expiration Date
+              </Label>
+              <Input
+                id="p-workPermitExp"
+                name="workPermitExpirationDate"
+                type="date"
+                value={data.workPermitExpirationDate ?? ""}
+                onChange={handleChange}
+              />
+            </div>
+          )}
         </div>
       )}
 

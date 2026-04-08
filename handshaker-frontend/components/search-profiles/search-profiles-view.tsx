@@ -22,6 +22,7 @@ export interface SearchFilters {
   gender: string[]
   maritalStatus: string[]
   stateOfOrigin: string
+  countryOfResidence: string
   ageMin: number | ""
   ageMax: number | ""
   // Legal
@@ -51,6 +52,7 @@ export const INITIAL_FILTERS: SearchFilters = {
   gender: [],
   maritalStatus: [],
   stateOfOrigin: "",
+  countryOfResidence: "",
   ageMin: "",
   ageMax: "",
   hasWorkPermit: "any",
@@ -77,6 +79,7 @@ function buildRequestBody(filters: SearchFilters): ProfileSearchRequest {
   if (filters.gender.length === 1) body.gender = filters.gender[0]
   if (filters.maritalStatus.length === 1) body.maritalStatus = filters.maritalStatus[0]
   if (filters.stateOfOrigin) body.stateOfOrigin = filters.stateOfOrigin
+  if (filters.countryOfResidence) body.countryOfResidence = filters.countryOfResidence
   if (filters.ageMin !== "") body.minAge = filters.ageMin
   if (filters.ageMax !== "") body.maxAge = filters.ageMax
   if (filters.hasWorkPermit === "yes") body.hasWorkPermit = true
@@ -106,6 +109,7 @@ function countActiveFilters(filters: SearchFilters): number {
   if (filters.gender.length > 0) count++
   if (filters.maritalStatus.length > 0) count++
   if (filters.stateOfOrigin) count++
+  if (filters.countryOfResidence) count++
   if (filters.ageMin !== "" || filters.ageMax !== "") count++
   if (filters.hasWorkPermit !== "any") count++
   if (filters.currentlyEmployed !== "any") count++
@@ -253,6 +257,12 @@ export function SearchProfilesView() {
             <Badge variant="secondary" className="gap-1">
               Origin: {filters.stateOfOrigin}
               <button type="button" onClick={() => setFilters((f) => ({ ...f, stateOfOrigin: "" }))}><X className="size-3" /></button>
+            </Badge>
+          )}
+          {filters.countryOfResidence && (
+            <Badge variant="secondary" className="gap-1">
+              Origin: {filters.countryOfResidence}
+              <button type="button" onClick={() => setFilters((f) => ({ ...f, countryOfResidence: "" }))}><X className="size-3" /></button>
             </Badge>
           )}
           {(filters.ageMin !== "" || filters.ageMax !== "") && (
