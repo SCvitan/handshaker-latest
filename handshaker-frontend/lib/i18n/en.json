@@ -11,7 +11,9 @@
     "account": "Account",
     "companyAccount": "Company Account",
     "userAccount": "User Account",
-    "myJobs":"My Jobs"
+    "myJobs":"My Jobs",
+    "favorites": "Favorites",
+    "subscription" : "My Premium Plan"
   },
   "landing": {
     "badge": "Build your professional CV in minutes",

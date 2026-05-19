@@ -1,7 +1,8 @@
 package com.handshaker.company_service.service;
 
+import com.handshaker.company_service.dto.AccessResponse;
 import com.handshaker.company_service.enums.Role;
-import com.handshaker.company_service.config.RabbitConfig;
+import com.handshaker.company_service.config.UserRabbitConfig;
 import com.handshaker.company_service.dto.CompanyResponse;
 import com.handshaker.company_service.dto.UpdateCompanyRequest;
 import com.handshaker.company_service.model.Company;
@@ -12,6 +13,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 import com.handshaker.events.UserRegisteredEvent;
 
+import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -26,7 +28,7 @@ public class CompanyService {
         this.repository = repository;
     }
 
-    @RabbitListener(queues = RabbitConfig.COMPANY_REGISTERED_QUEUE)
+    @RabbitListener(queues = UserRabbitConfig.COMPANY_REGISTERED_QUEUE)
     public void handleUserRegistered(UserRegisteredEvent event) {
         log.info("Received UserRegisteredEvent for {} with email {}", event.getUserId(), event.getEmail());
         if (!Objects.equals(event.getRole(), Role.COMPANY.toString())) {
@@ -77,6 +79,23 @@ public class CompanyService {
 
         repository.save(company);
 
+    }
+
+    public AccessResponse getAccess(UUID companyId) {
+
+        Company company = repository.findById(companyId)
+                .orElseThrow();
+
+        boolean premium =
+                company.getSubscriptionEndDate() != null &&
+                        company.getSubscriptionEndDate().isAfter(LocalDate.now());
+
+        AccessResponse res = new AccessResponse();
+        res.setPremium(premium);
+        res.setAiSearchRemaining(company.getAiSearchRemaining());
+        res.setContactTokensRemaining(company.getContactTokensRemaining());
+
+        return res;
     }
 
     private Company getCompany(UUID userId) {

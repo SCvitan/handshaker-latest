@@ -2,8 +2,10 @@ package com.handshaker.company_service.model;
 
 import com.handshaker.company_service.enums.CompanySize;
 import com.handshaker.company_service.enums.Industry;
+import com.handshaker.company_service.enums.SubscriptionPlan;
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -26,7 +28,22 @@ public class Company {
     @Enumerated(EnumType.STRING)
     private CompanySize companySize;
 
-    public Company(UUID id, String email, String companyName, String description, Industry industry, String phoneNumber, String website, String address, String city, String country, CompanySize companySize) {
+    // PREMIUM
+
+    @Enumerated(EnumType.STRING)
+    private SubscriptionPlan subscriptionPlan;
+
+    private Integer aiSearchRemaining;
+
+    private Integer contactTokensRemaining;
+
+    private LocalDate subscriptionStartDate;
+
+    private LocalDate subscriptionEndDate;
+
+    private Boolean premium;
+
+    public Company(UUID id, String email, String companyName, String description, Industry industry, String phoneNumber, String website, String address, String city, String country, CompanySize companySize, SubscriptionPlan subscriptionPlan, Integer aiSearchRemaining, Integer contactTokensRemaining, LocalDate subscriptionStartDate, LocalDate subscriptionEndDate, Boolean premium) {
         this.id = id;
         this.email = email;
         this.companyName = companyName;
@@ -38,6 +55,12 @@ public class Company {
         this.city = city;
         this.country = country;
         this.companySize = companySize;
+        this.subscriptionPlan = subscriptionPlan;
+        this.aiSearchRemaining = aiSearchRemaining;
+        this.contactTokensRemaining = contactTokensRemaining;
+        this.subscriptionStartDate = subscriptionStartDate;
+        this.subscriptionEndDate = subscriptionEndDate;
+        this.premium = premium;
     }
 
     public Company() {
@@ -129,5 +152,53 @@ public class Company {
 
     public void setCompanySize(CompanySize companySize) {
         this.companySize = companySize;
+    }
+
+    public SubscriptionPlan getSubscriptionPlan() {
+        return subscriptionPlan;
+    }
+
+    public void setSubscriptionPlan(SubscriptionPlan subscriptionPlan) {
+        this.subscriptionPlan = subscriptionPlan;
+    }
+
+    public Integer getAiSearchRemaining() {
+        return aiSearchRemaining;
+    }
+
+    public void setAiSearchRemaining(Integer aiSearchRemaining) {
+        this.aiSearchRemaining = aiSearchRemaining;
+    }
+
+    public Integer getContactTokensRemaining() {
+        return contactTokensRemaining;
+    }
+
+    public void setContactTokensRemaining(Integer contactTokensRemaining) {
+        this.contactTokensRemaining = contactTokensRemaining;
+    }
+
+    public LocalDate getSubscriptionStartDate() {
+        return subscriptionStartDate;
+    }
+
+    public void setSubscriptionStartDate(LocalDate subscriptionStartDate) {
+        this.subscriptionStartDate = subscriptionStartDate;
+    }
+
+    public LocalDate getSubscriptionEndDate() {
+        return subscriptionEndDate;
+    }
+
+    public void setSubscriptionEndDate(LocalDate subscriptionEndDate) {
+        this.subscriptionEndDate = subscriptionEndDate;
+    }
+
+    public Boolean getPremium() {
+        return premium;
+    }
+
+    public void setPremium(Boolean premium) {
+        this.premium = premium;
     }
 }

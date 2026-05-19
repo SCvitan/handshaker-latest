@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useAuth } from "@/components/auth-provider"
-import { useLanguage, type Locale } from "@/components/language-provider"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { useAuth } from "@/components/auth-provider";
+import { useLanguage, type Locale } from "@/components/language-provider";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,24 +11,36 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { FileText, LogOut, User, ChevronDown, Building2, Search, Globe, Settings, Briefcase } from "lucide-react"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { useRouter } from "next/navigation"
+} from "@/components/ui/dropdown-menu";
+import {
+  FileText,
+  LogOut,
+  User,
+  ChevronDown,
+  Building2,
+  Search,
+  Globe,
+  Settings,
+  Briefcase,
+  Heart,
+  Crown,
+} from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useRouter } from "next/navigation";
 
 export function Navbar() {
-  const { user, isLoading, logout } = useAuth()
-  const { locale, setLocale, t } = useLanguage()
-  const router = useRouter()
+  const { user, isLoading, logout } = useAuth();
+  const { locale, setLocale, t } = useLanguage();
+  const router = useRouter();
 
   const handleLogout = async () => {
-    await logout()
-    router.push("/")
-  }
+    await logout();
+    router.push("/");
+  };
 
   const toggleLocale = () => {
-    setLocale(locale === "en" ? "hr" : "en")
-  }
+    setLocale(locale === "en" ? "hr" : "en");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -39,12 +51,6 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
-          <Link
-            href="/"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {t("nav.home")}
-          </Link>
           {user && user.role === "USER" && (
             <Link
               href="/profile"
@@ -56,22 +62,22 @@ export function Navbar() {
           {user && user.role === "COMPANY" && (
             <>
               <Link
-                href="/company-profile"
+                href="/company-dashboard"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
-                {t("nav.companyProfile")}
-              </Link>
-              <Link
-                href="/my-jobs"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {t("nav.myJobs") || "My Jobs"}
+                Dashboard
               </Link>
               <Link
                 href="/search-profiles"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t("nav.searchProfiles")}
+              </Link>
+              <Link
+                href="/my-jobs"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {t("nav.myJobs") || "My Jobs"}
               </Link>
             </>
           )}
@@ -117,9 +123,13 @@ export function Navbar() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col gap-1">
-                    <p className="text-sm font-medium">{user.email || t("nav.account")}</p>
+                    <p className="text-sm font-medium">
+                      {user.email || t("nav.account")}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {user.role === "COMPANY" ? t("nav.companyAccount") : t("nav.userAccount")}
+                      {user.role === "COMPANY"
+                        ? t("nav.companyAccount")
+                        : t("nav.userAccount")}
                     </p>
                   </div>
                 </DropdownMenuLabel>
@@ -156,6 +166,13 @@ export function Navbar() {
                       <Search className="mr-2 size-4" />
                       {t("nav.searchProfiles")}
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/subscription")}
+                      className="cursor-pointer"
+                    >
+                      <Crown className="mr-2 size-4" />
+                      {t("nav.subscription") || "Pricing"}
+                    </DropdownMenuItem>
                   </>
                 )}
                 <DropdownMenuSeparator />
@@ -185,7 +202,10 @@ export function Navbar() {
               >
                 {t("nav.logIn")}
               </Button>
-              <Button size="sm" onClick={() => router.push("/auth?mode=register")}>
+              <Button
+                size="sm"
+                onClick={() => router.push("/auth?mode=register")}
+              >
                 {t("nav.register")}
               </Button>
             </>
@@ -193,5 +213,5 @@ export function Navbar() {
         </div>
       </div>
     </header>
-  )
+  );
 }

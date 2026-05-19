@@ -3,6 +3,7 @@ package com.handshaker.profiles_service.controller;
 import com.handshaker.profiles_service.dto.*;
 import com.handshaker.profiles_service.enums.DocumentType;
 import com.handshaker.profiles_service.service.UserProfilesService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -99,9 +100,16 @@ public class UserProfileController {
     @PostMapping("/search")
     public Page<UserProfileResponse> searchProfiles(
             @RequestBody UserProfileSearchRequest request,
-            @PageableDefault(size = 20) Pageable pageable
+            @PageableDefault(size = 20) Pageable pageable,
+            Authentication authentication
     ) {
-        return service.search(request, pageable);
+        return service.search(request, pageable, authentication);
+    }
+
+    @GetMapping("/{id}")
+    public UserProfileResponse getUserById( Authentication authentication, @PathVariable UUID id ){
+        UUID userId = UUID.fromString(authentication.getPrincipal().toString());
+        return service.getUserById(id);
     }
 
     @PostMapping("/me/profile-image")
@@ -122,6 +130,20 @@ public class UserProfileController {
     ) {
         UUID userId = UUID.fromString(authentication.getPrincipal().toString());
         return service.uploadDocument(userId, file, type);
+    }
+
+    @PostMapping("/batch/summary")
+    public List<ProfileSummaryDTO> getSummaries(
+            @RequestBody List<UUID> ids
+    ) {
+        return service.getProfileSummaries(ids);
+    }
+
+    @PostMapping("/batch/dashboard")
+    public List<WorkerDashboardProfileDTO> getDashboardProfiles(
+            @RequestBody List<UUID> ids
+    ) {
+        return service.getDashboardProfiles(ids);
     }
 
 }

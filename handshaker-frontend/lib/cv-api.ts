@@ -9,6 +9,8 @@ import type {
   WorkExperience,
   Education,
   DocumentItem,
+  ProfileSummary,
+  CompanyDashboardResponse,
 } from "./cv-types"
 
 //const API_BASE = "http://142.132.181.45:8083"
@@ -252,6 +254,7 @@ export interface ProfileSearchRequest {
   industry?: string
   position?: string
   experienceLevel?: string
+  preferredWorkTypes?: string
   minExperienceYears?: number
   maxExperienceYears?: number
   minIncome?: number
@@ -319,4 +322,117 @@ export async function deleteJobAd(id: string): Promise<void> {
   await authFetch(`${COMPANY_API_BASE}/companies/me/jobs/${id}`, {
     method: "DELETE",
   })
+}
+
+// ── Favorites endpoints (company) ──
+
+export async function addToFavorites(profileId: string): Promise<void> {
+  await authFetch(`${COMPANY_API_BASE}/companies/me/favourites/${profileId}`, {
+    method: "POST",
+  })
+}
+
+export async function getFavorites(): Promise<ProfileSummary[]> {
+  const res = await authFetch(`${COMPANY_API_BASE}/companies/me/favourites`)
+  return res.json()
+}
+
+export async function removeFromFavorites(profileId: string): Promise<void> {
+  await authFetch(`${COMPANY_API_BASE}/companies/me/favourites/${profileId}`, {
+    method: "DELETE",
+  })
+}
+
+export async function fetchProfileById(profileId: string): Promise<UserProfile> {
+  const res = await authFetch(`${API_BASE}/users/${profileId}`)
+  const json = await res.json()
+  if (json.employmentCurrentResponse && !json.employmentCurrent) {
+    json.employmentCurrent = json.employmentCurrentResponse
+    delete json.employmentCurrentResponse
+  }
+  return json as UserProfile
+}
+
+// ── Subscription endpoint ──
+
+export type SubscriptionPlan = "BASIC" | "PRO" | "AGENCY"
+
+export async function activateSubscription(plan: SubscriptionPlan): Promise<void> {
+  await authFetch(`${COMPANY_API_BASE}/subscription/activate?plan=${plan}`, {
+    method: "POST",
+  })
+}
+
+// ── Job Offers endpoints (company) ──
+
+import type { JobOffer } from "./cv-types"
+
+export async function fetchCompanyOffers(): Promise<JobOffer[]> {
+  const res = await fetch(`${COMPANY_API_BASE}/company/offers`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch company offers")
+  }
+
+  return res.json()
+}
+
+export async function fetchWorkerOffers(): Promise<JobOffer[]> {
+  const res = await fetch(`${COMPANY_API_BASE}/offers/me`, {
+    credentials: "include",
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch offers")
+  }
+
+  return res.json()
+}
+
+export async function markInterested(offerId: string) {
+  await fetch(`${COMPANY_API_BASE}/offers/${offerId}/interested`, {
+    method: "POST",
+    credentials: "include",
+  })
+}
+
+export async function rejectOffer(offerId: string) {
+  await fetch(`${COMPANY_API_BASE}/offers/${offerId}/reject`, {
+    method: "POST",
+    credentials: "include",
+  })
+}
+
+// ── Company Dashboard endpoints ──
+
+
+export async function fetchCompanyDashboard(): Promise<CompanyDashboardResponse> {
+
+  const res = await authFetch(
+    `${COMPANY_API_BASE}/companies/dashboard`, {
+      method: "GET",
+      credentials: "include",
+    }
+  )
+
+  return res.json()
+}
+
+export async function unlockCandidateContact(
+  offerId: string
+): Promise<void> {
+
+  await authFetch(
+    `${COMPANY_API_BASE}/offers/${offerId}/unlock-contact`,
+    {
+      method: "POST",
+      credentials: "include"
+    }
+  )
 }

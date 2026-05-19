@@ -10,7 +10,9 @@
     "logOut": "Odjava",
     "account": "Racun",
     "companyAccount": "Poslovni racun",
-    "userAccount": "Korisnicki racun"
+    "userAccount": "Korisnicki racun",
+    "My Jobs":"Moji poslovi",
+    "Favorites": "Favoriti"
   },
   "landing": {
     "badge": "Izradite profesionalni zivotopis u nekoliko minuta",

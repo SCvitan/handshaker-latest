@@ -13,7 +13,7 @@ public class JobAd {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     private UUID companyId;
 
@@ -42,11 +42,11 @@ public class JobAd {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

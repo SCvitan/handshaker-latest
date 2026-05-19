@@ -6,6 +6,8 @@ import com.handshaker.profiles_service.enums.Role;
 import com.handshaker.profiles_service.model.*;
 import com.handshaker.profiles_service.config.RabbitConfig;
 import com.handshaker.profiles_service.dto.*;
+import com.handshaker.profiles_service.repository.CompanyClient;
+import com.handshaker.profiles_service.repository.ConnectionClient;
 import com.handshaker.profiles_service.repository.UserProfileRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,12 +31,19 @@ public class UserProfilesService {
     private final UserProfileRepository repository;
     private final ProfileCompletenessCalculator completenessCalculator;
     private final FileStorageService fileStorageService;
+    private final CompanyClient companyClient;
+    private final AuthUtil authUtil;
+    private final ConnectionClient connectionClient;
+
     private static final Logger log = LoggerFactory.getLogger(UserProfilesService.class);
 
-    public UserProfilesService(UserProfileRepository repository, ProfileCompletenessCalculator completenessCalculator, FileStorageService fileStorageService) {
+    public UserProfilesService(UserProfileRepository repository, ProfileCompletenessCalculator completenessCalculator, FileStorageService fileStorageService, CompanyClient companyClient, AuthUtil authUtil, ConnectionClient connectionClient) {
         this.repository = repository;
         this.completenessCalculator = completenessCalculator;
         this.fileStorageService = fileStorageService;
+        this.companyClient = companyClient;
+        this.authUtil = authUtil;
+        this.connectionClient = connectionClient;
     }
 
     @RabbitListener(queues = RabbitConfig.USER_REGISTERED_QUEUE)
@@ -260,20 +270,46 @@ public class UserProfilesService {
 
 
     @Transactional
-    public Page<UserProfileResponse> search(UserProfileSearchRequest request, Pageable pageable) {
+    public Page<UserProfileResponse> search(
+            UserProfileSearchRequest request,
+            Pageable pageable,
+            Authentication authentication
+    ) {
 
-        Specification<UserProfile> spec = UserProfileSpecifications.build(request);
+        Specification<UserProfile> spec =
+                UserProfileSpecifications.build(request);
 
-        Page<UserProfile> profiles = repository.findAll(spec, pageable);
+        Page<UserProfile> profiles =
+                repository.findAll(spec, pageable);
 
-        // explicitly fetch collections inside transaction
         profiles.forEach(profile -> {
-            profile.getLanguageSkills().size();   // initializes languageSkills
+            profile.getLanguageSkills().size();
             profile.getWorkExperiences().size();
             profile.getDocuments().size();
         });
 
-        return profiles.map(this::mapToUserProfileResponse);
+        UUID companyId = authUtil.getCompanyId(authentication);
+
+        return profiles.map(profile -> {
+
+            boolean isConnected =
+                    connectionClient.exists(companyId, profile.getId());
+
+            return mapToUserProfileResponsePremium(profile, isConnected);
+        });
+    }
+
+    @Transactional
+    public UserProfileResponse getUserById(UUID id) {
+
+        UserProfile profile = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        profile.getLanguageSkills().size();
+        profile.getWorkExperiences().size();
+        profile.getDocuments().size();
+
+        return mapToUserProfileResponse(profile);
     }
 
     @Transactional
@@ -312,6 +348,57 @@ public class UserProfilesService {
         return upload;
     }
 
+    public List<WorkerDashboardProfileDTO> getDashboardProfiles(
+            List<UUID> ids
+    ) {
+
+        List<UserProfile> profiles =
+                repository.findAllById(ids);
+
+        return profiles.stream()
+                .map(profile -> new WorkerDashboardProfileDTO(
+
+                        profile.getId(),
+
+                        profile.getPersonalInfo().getFirstName(),
+                        profile.getPersonalInfo().getLastName(),
+
+                        profile.getProfileImageUrl(),
+
+                        profile.getPersonalInfo().getCountryOfCurrentResidence(),
+
+                        profile.getJobPreferences().getDesiredPosition(),
+                        profile.getJobPreferences().getDesiredIndustry(),
+
+                        profile.getPersonalInfo().getMobilePhone(),
+
+                        profile.getEmail()
+                ))
+                .toList();
+    }
+
+    public List<ProfileSummaryDTO> getProfileSummaries(List<UUID> ids) {
+
+        return repository.findAllById(ids)
+                .stream()
+                .map(this::mapToSummary)
+                .toList();
+    }
+
+    private ProfileSummaryDTO mapToSummary(UserProfile profile) {
+
+        ProfileSummaryDTO dto = new ProfileSummaryDTO();
+
+        dto.setId(profile.getId());
+        dto.setFirstName(profile.getPersonalInfo().getFirstName());
+        dto.setLastName(profile.getPersonalInfo().getLastName());
+        dto.setProfileImageUrl(profile.getProfileImageUrl());
+        dto.setCountryOfResidence(profile.getPersonalInfo().getCountryOfCurrentResidence());
+        dto.setProfession(profile.getJobPreferences().getDesiredPosition());
+
+        return dto;
+    }
+
     private UserProfileResponse mapToUserProfileResponse(UserProfile profile) {
         return new UserProfileResponse(
                 profile.getId(),
@@ -325,6 +412,26 @@ public class UserProfilesService {
                 mapEducation(profile.getEducation()),
                 mapWorkExperiences(profile.getWorkExperiences()),
                 mapDocuments(profile.getDocuments()), // ← add here
+                completenessCalculator.calculate(profile)
+        );
+    }
+
+    private UserProfileResponse mapToUserProfileResponsePremium(
+            UserProfile profile,
+            boolean isPremium
+    ) {
+        return new UserProfileResponse(
+                profile.getId(),
+                isPremium ? profile.getEmail() : null,   // 🔥 mask email
+                profile.getProfileImageUrl(),
+                mapPersonalPremium(profile.getPersonalInfo(), profile, isPremium),
+                mapLegal(profile.getLegalStatus()),
+                mapPreferences(profile.getJobPreferences()),
+                mapLanguages(profile.getLanguageSkills()),
+                mapAccommodation(profile.getAccommodation()),
+                mapEducation(profile.getEducation()),
+                mapWorkExperiences(profile.getWorkExperiences()),
+                mapDocuments(profile.getDocuments()),
                 completenessCalculator.calculate(profile)
         );
     }
@@ -405,6 +512,24 @@ public class UserProfilesService {
                 info.getMobilePhone(),
                 info.getMaritalStatus()
 
+        );
+    }
+
+    private PersonalInfoResponse mapPersonalPremium(
+            PersonalInfo info,
+            UserProfile profile,
+            boolean isPremium
+    ) {
+
+        return new PersonalInfoResponse(
+                isPremium ? info.getFirstName() : null,
+                isPremium ? info.getLastName() : null,
+                info.getDateOfBirth(),
+                info.getGender(),
+                info.getStateOfOrigin(),
+                info.getCountryOfCurrentResidence(),
+                isPremium ? info.getMobilePhone() : null,
+                info.getMaritalStatus()
         );
     }
 

@@ -21,7 +21,7 @@ public class StartupConfig {
 
             try {
                 // Wait for RabbitMQ & profiles-service to start
-                Thread.sleep(10000);
+                Thread.sleep(15000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

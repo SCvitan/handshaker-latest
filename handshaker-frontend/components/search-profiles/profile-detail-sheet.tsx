@@ -1,15 +1,17 @@
-"use client"
+"use client";
 
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from "@/components/ui/sheet"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import {
   User,
   Shield,
@@ -22,89 +24,143 @@ import {
   Phone,
   Calendar,
   Clock,
-} from "lucide-react"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import type { UserProfile } from "@/lib/cv-types"
+  Heart,
+  Loader2,
+  Save,
+  SendHorizonal,
+} from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import type { UserProfile } from "@/lib/cv-types";
+import { addToFavorites, removeFromFavorites } from "@/lib/cv-api";
 
 interface ProfileDetailSheetProps {
-  profile: UserProfile | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  profile: UserProfile | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  isFavorite?: boolean;
+  onFavoriteChange?: () => void;
 }
 
 function calculateAge(dateOfBirth: string): number {
-  const dob = new Date(dateOfBirth)
-  const today = new Date()
-  let age = today.getFullYear() - dob.getFullYear()
-  const m = today.getMonth() - dob.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--
-  return age
+  const dob = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
 }
 
 function formatDate(d: string | null) {
-  if (!d) return "-"
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+  if (!d) return "-";
+  return new Date(d).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-1.5 text-sm">
       <span className="shrink-0 text-muted-foreground">{label}</span>
-      <span className="text-right font-medium text-foreground">{value || "-"}</span>
+      <span className="text-right font-medium text-foreground">
+        {value || "-"}
+      </span>
     </div>
-  )
+  );
 }
 
-export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetailSheetProps) {
-  if (!profile) return null
+export function ProfileDetailSheet({
+  profile,
+  open,
+  onOpenChange,
+  isFavorite = false,
+  onFavoriteChange,
+}: ProfileDetailSheetProps) {
+  const [isToggling, setIsToggling] = useState(false);
 
-  const { personalInfo, legalStatus, jobPreferences, languages, accommodation, education, workExperiences } =
-    profile
-  const completion = Math.round((profile.profileCompletion || 0) * 100)
-  const age = personalInfo.dateOfBirth ? calculateAge(personalInfo.dateOfBirth) : null
+  if (!profile) return null;
+
+  const {
+    personalInfo,
+    legalStatus,
+    jobPreferences,
+    languages,
+    accommodation,
+    education,
+    workExperiences,
+  } = profile;
+
+  const handleToggleFavorite = async () => {
+    setIsToggling(true);
+    try {
+      if (isFavorite) {
+        await removeFromFavorites(profile.id);
+      } else {
+        await addToFavorites(profile.id);
+      }
+      onFavoriteChange?.();
+    } catch (err) {
+      console.error("Failed to toggle favorite:", err);
+    } finally {
+      setIsToggling(false);
+    }
+  };
+  const completion = Math.round((profile.profileCompletion || 0) * 100);
+  const age = personalInfo.dateOfBirth
+    ? calculateAge(personalInfo.dateOfBirth)
+    : null;
   const initials =
     personalInfo.firstName && personalInfo.lastName
       ? `${personalInfo.firstName[0]}${personalInfo.lastName[0]}`.toUpperCase()
-      : "?"
+      : "?";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader className="pb-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="size-16 shrink-0">
-              <AvatarImage
-                src={profile.profileImageUrl ?? undefined}
-                alt={`${personalInfo.firstName} ${personalInfo.lastName}`}
-              />
-              <AvatarFallback className="text-lg font-semibold">{initials}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <SheetTitle className="text-xl">
-                {personalInfo.firstName} {personalInfo.lastName}
-              </SheetTitle>
-              <SheetDescription>{profile.email}</SheetDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4 min-w-0 flex-1">
+              <Avatar className="size-16 shrink-0">
+                <AvatarImage
+                  src={profile.profileImageUrl ?? undefined}
+                  alt={`${personalInfo.firstName} ${personalInfo.lastName}`}
+                />
+                <AvatarFallback className="text-lg font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <SheetTitle className="text-xl">
+                  {personalInfo.firstName} {personalInfo.lastName}
+                </SheetTitle>
+                <SheetDescription>{profile.email}</SheetDescription>
+              </div>
             </div>
           </div>
         </SheetHeader>
-
-        {/* Completion bar */}
-        <div className="mb-6">
-          <div className="mb-1.5 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Profile Completion</span>
-            <span
-              className={`font-medium ${
-                completion >= 80
-                  ? "text-green-600"
-                  : completion >= 50
-                    ? "text-amber-600"
-                    : "text-red-500"
-              }`}
+        <div className="sticky top-0 z-10 bg-background pb-4">
+          <div className="flex gap-2">
+            <Button
+              variant={isFavorite ? "default" : "outline"}
+              onClick={handleToggleFavorite}
+              disabled={isToggling}
+              className="flex-1"
             >
-              {completion}%
-            </span>
+              {isToggling ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 size-4" />
+              )}
+
+              {isFavorite ? "Saved" : "Save Candidate"}
+            </Button>
+
+            <Button className="flex-1">
+              <SendHorizonal className="mr-2 size-4" />
+              Send Offer
+            </Button>
           </div>
-          <Progress value={completion} className="h-2" />
         </div>
 
         {/* Personal Info */}
@@ -114,19 +170,25 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
             Personal Info
           </h4>
           <div className="rounded-md border border-border bg-muted/30 px-3 py-1">
-            <Row label="Full Name" value={`${personalInfo.firstName} ${personalInfo.lastName}`} />
+            <Row
+              label="Full Name"
+              value={`${personalInfo.firstName} ${personalInfo.lastName}`}
+            />
             <Row label="Age" value={age !== null ? `${age} years` : "-"} />
             <Row
               label="Gender"
               value={
                 personalInfo.gender
-                  ? personalInfo.gender.charAt(0) + personalInfo.gender.slice(1).toLowerCase()
+                  ? personalInfo.gender.charAt(0) +
+                    personalInfo.gender.slice(1).toLowerCase()
                   : "-"
               }
             />
-            <Row label="Date of Birth" value={formatDate(personalInfo.dateOfBirth)} />
+            <Row
+              label="Date of Birth"
+              value={formatDate(personalInfo.dateOfBirth)}
+            />
             <Row label="State of Origin" value={personalInfo.stateOfOrigin} />
-            <Row label="State of Current Residence" value={personalInfo.countryOfResidence} />
             <Row label="Phone" value={personalInfo.mobilePhoneNumber} />
           </div>
         </section>
@@ -143,24 +205,43 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
             <Row
               label="Work Permit"
               value={
-                <Badge variant={legalStatus.hasCroatianWorkPermit ? "secondary" : "outline"}>
+                <Badge
+                  variant={
+                    legalStatus.hasCroatianWorkPermit ? "secondary" : "outline"
+                  }
+                >
                   {legalStatus.hasCroatianWorkPermit ? "Yes" : "No"}
                 </Badge>
               }
             />
             {legalStatus.hasCroatianWorkPermit && (
-              <Row label="Permit Expires" value={formatDate(legalStatus.workPermitExpirationDate)} />
+              <Row
+                label="Permit Expires"
+                value={formatDate(legalStatus.workPermitExpirationDate)}
+              />
             )}
             <Row
               label="Employed in Croatia"
               value={
-                <Badge variant={legalStatus.currentlyEmployedInCroatia ? "secondary" : "outline"}>
+                <Badge
+                  variant={
+                    legalStatus.currentlyEmployedInCroatia
+                      ? "secondary"
+                      : "outline"
+                  }
+                >
                   {legalStatus.currentlyEmployedInCroatia ? "Yes" : "No"}
                 </Badge>
               }
             />
-            <Row label="Arrived in Croatia" value={formatDate(legalStatus.dateOfArrivalInCroatia)} />
-            <Row label="Passport Expires" value={formatDate(legalStatus.passportExpirationDate)} />
+            <Row
+              label="Arrived in Croatia"
+              value={formatDate(legalStatus.dateOfArrivalInCroatia)}
+            />
+            <Row
+              label="Passport Expires"
+              value={formatDate(legalStatus.passportExpirationDate)}
+            />
             <Row label="OIB" value={legalStatus.oib} />
           </div>
         </section>
@@ -179,9 +260,14 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
             <Row
               label="Work Type"
               value={
-                jobPreferences.preferredWorkTypes && jobPreferences.preferredWorkTypes.length > 0
+                jobPreferences.preferredWorkTypes &&
+                jobPreferences.preferredWorkTypes.length > 0
                   ? jobPreferences.preferredWorkTypes
-                      .map((t) => t.replace(/_/g, " ").charAt(0) + t.replace(/_/g, " ").slice(1).toLowerCase())
+                      .map(
+                        (t) =>
+                          t.replace(/_/g, " ").charAt(0) +
+                          t.replace(/_/g, " ").slice(1).toLowerCase()
+                      )
                       .join(", ")
                   : "-"
               }
@@ -192,16 +278,21 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
                 typeof jobPreferences.expectedMonthlyIncome === "number"
                   ? `EUR ${jobPreferences.expectedMonthlyIncome.toLocaleString()}/mo`
                   : typeof jobPreferences.expectedHourlyPay === "number"
-                    ? `EUR ${jobPreferences.expectedHourlyPay}/hr`
-                    : "-"
+                  ? `EUR ${jobPreferences.expectedHourlyPay}/hr`
+                  : "-"
               }
             />
             <Row
               label="Experience Level"
               value={
                 jobPreferences.experienceLevel
-                  ? jobPreferences.experienceLevel.replace(/_/g, " ").charAt(0) +
-                    jobPreferences.experienceLevel.replace(/_/g, " ").slice(1).toLowerCase()
+                  ? jobPreferences.experienceLevel
+                      .replace(/_/g, " ")
+                      .charAt(0) +
+                    jobPreferences.experienceLevel
+                      .replace(/_/g, " ")
+                      .slice(1)
+                      .toLowerCase()
                   : "-"
               }
             />
@@ -216,16 +307,32 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
             <Row
               label="Accommodation"
               value={
-                <Badge variant={jobPreferences.accommodationRequired ? "secondary" : "outline"}>
-                  {jobPreferences.accommodationRequired ? "Needed" : "Not needed"}
+                <Badge
+                  variant={
+                    jobPreferences.accommodationRequired
+                      ? "secondary"
+                      : "outline"
+                  }
+                >
+                  {jobPreferences.accommodationRequired
+                    ? "Needed"
+                    : "Not needed"}
                 </Badge>
               }
             />
             <Row
               label="Transportation"
               value={
-                <Badge variant={jobPreferences.transportationRequired ? "secondary" : "outline"}>
-                  {jobPreferences.transportationRequired ? "Needed" : "Not needed"}
+                <Badge
+                  variant={
+                    jobPreferences.transportationRequired
+                      ? "secondary"
+                      : "outline"
+                  }
+                >
+                  {jobPreferences.transportationRequired
+                    ? "Needed"
+                    : "Not needed"}
                 </Badge>
               }
             />
@@ -243,9 +350,13 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
           <div className="space-y-2">
             {languages.length > 0 ? (
               languages.map((lang, i) => {
-                const avg = ((lang.written + lang.spoken + lang.reading + lang.understanding) / 4).toFixed(
-                  1
-                )
+                const avg = (
+                  (lang.written +
+                    lang.spoken +
+                    lang.reading +
+                    lang.understanding) /
+                  4
+                ).toFixed(1);
                 return (
                   <div
                     key={`${lang.language}-${i}`}
@@ -253,9 +364,14 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
                   >
                     <div className="mb-1 flex items-center justify-between">
                       <span className="text-sm font-medium text-foreground">
-                        {lang.language ? lang.language.charAt(0) + lang.language.slice(1).toLowerCase() : "-"}
+                        {lang.language
+                          ? lang.language.charAt(0) +
+                            lang.language.slice(1).toLowerCase()
+                          : "-"}
                       </span>
-                      <span className="text-xs text-muted-foreground">Avg: {avg}/10</span>
+                      <span className="text-xs text-muted-foreground">
+                        Avg: {avg}/10
+                      </span>
                     </div>
                     <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
                       <span>Written: {lang.written}</span>
@@ -264,10 +380,12 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
                       <span>Understand: {lang.understanding}</span>
                     </div>
                   </div>
-                )
+                );
               })
             ) : (
-              <p className="text-sm text-muted-foreground">No languages listed.</p>
+              <p className="text-sm text-muted-foreground">
+                No languages listed.
+              </p>
             )}
           </div>
         </section>
@@ -285,7 +403,11 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
               label="Address"
               value={
                 accommodation.address?.street
-                  ? `${accommodation.address.street} ${accommodation.address.houseNumber || ""}, ${accommodation.address.postalCode || ""} ${accommodation.address.city}`
+                  ? `${accommodation.address.street} ${
+                      accommodation.address.houseNumber || ""
+                    }, ${accommodation.address.postalCode || ""} ${
+                      accommodation.address.city
+                    }`
                   : "-"
               }
             />
@@ -293,21 +415,29 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
               label="Provider"
               value={
                 accommodation.provider
-                  ? accommodation.provider.charAt(0) + accommodation.provider.slice(1).toLowerCase()
+                  ? accommodation.provider.charAt(0) +
+                    accommodation.provider.slice(1).toLowerCase()
                   : "-"
               }
             />
             <Row
               label="Type"
               value={
-                accommodation.type ? accommodation.type.replace(/_/g, " ").charAt(0) + accommodation.type.replace(/_/g, " ").slice(1).toLowerCase() : "-"
+                accommodation.type
+                  ? accommodation.type.replace(/_/g, " ").charAt(0) +
+                    accommodation.type.replace(/_/g, " ").slice(1).toLowerCase()
+                  : "-"
               }
             />
             <Row
               label="People in Room"
               value={
                 accommodation.peopleInRoom
-                  ? accommodation.peopleInRoom.replace(/_/g, " ").charAt(0) + accommodation.peopleInRoom.replace(/_/g, " ").slice(1).toLowerCase()
+                  ? accommodation.peopleInRoom.replace(/_/g, " ").charAt(0) +
+                    accommodation.peopleInRoom
+                      .replace(/_/g, " ")
+                      .slice(1)
+                      .toLowerCase()
                   : "-"
               }
             />
@@ -328,7 +458,10 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
               value={
                 education?.highestLevel
                   ? education.highestLevel.replace(/_/g, " ").charAt(0) +
-                    education.highestLevel.replace(/_/g, " ").slice(1).toLowerCase()
+                    education.highestLevel
+                      .replace(/_/g, " ")
+                      .slice(1)
+                      .toLowerCase()
                   : "-"
               }
             />
@@ -355,27 +488,37 @@ export function ProfileDetailSheet({ profile, open, onOpenChange }: ProfileDetai
                   className="rounded-md border border-border bg-muted/30 px-3 py-2"
                 >
                   <div className="mb-1 flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">{exp.companyName}</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {exp.companyName}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                       {exp.yearsOfExperience === "LESS_THAN_1"
                         ? "< 1 yr"
                         : exp.yearsOfExperience === "5_PLUS"
-                          ? "5+ yrs"
-                          : `${exp.yearsOfExperience} yr${exp.yearsOfExperience !== "1" ? "s" : ""}`}
+                        ? "5+ yrs"
+                        : `${exp.yearsOfExperience} yr${
+                            exp.yearsOfExperience !== "1" ? "s" : ""
+                          }`}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground">{exp.position}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {exp.position}
+                  </p>
                   {exp.shortDescription && (
-                    <p className="mt-1 text-xs text-muted-foreground/80">{exp.shortDescription}</p>
+                    <p className="mt-1 text-xs text-muted-foreground/80">
+                      {exp.shortDescription}
+                    </p>
                   )}
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">No work experience listed.</p>
+              <p className="text-sm text-muted-foreground">
+                No work experience listed.
+              </p>
             )}
           </div>
         </section>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

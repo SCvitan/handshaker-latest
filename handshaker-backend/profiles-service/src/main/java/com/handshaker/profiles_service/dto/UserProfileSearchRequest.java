@@ -1,12 +1,10 @@
 package com.handshaker.profiles_service.dto;
 
 
-import com.handshaker.profiles_service.enums.ExperienceLevel;
-import com.handshaker.profiles_service.enums.Gender;
-import com.handshaker.profiles_service.enums.Language;
-import com.handshaker.profiles_service.enums.MaritalStatus;
+import com.handshaker.profiles_service.enums.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class UserProfileSearchRequest {
 
@@ -39,6 +37,8 @@ public class UserProfileSearchRequest {
     private Integer minProficiency;
 
     private String city;
+
+    private List<WorkType> preferredWorkTypes;
 
     public String getSearch() {
         return search;
@@ -198,5 +198,13 @@ public class UserProfileSearchRequest {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public List<WorkType> getPreferredWorkTypes() {
+        return preferredWorkTypes;
+    }
+
+    public void setPreferredWorkTypes(List<WorkType> preferredWorkTypes) {
+        this.preferredWorkTypes = preferredWorkTypes;
     }
 }

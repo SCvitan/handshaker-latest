@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface JobAdRepository extends JpaRepository<JobAd, String> {
+public interface JobAdRepository extends JpaRepository<JobAd, UUID> {
 
     List<JobAd> findByCompanyId(UUID userId);
+
 }

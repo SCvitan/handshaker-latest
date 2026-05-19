@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
+import { useLanguage } from "@/components/language-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -12,6 +13,7 @@ import { ProfileDetailSheet } from "./profile-detail-sheet"
 import type { UserProfile } from "@/lib/cv-types"
 import {
   searchProfiles,
+  getFavorites,
   type ProfileSearchRequest,
   type ProfileSearchResponse,
 } from "@/lib/cv-api"
@@ -36,6 +38,7 @@ export interface SearchFilters {
   yearsOfExperienceMax: number | ""
   incomeMin: number | ""
   incomeMax: number | ""
+  workType: "FULL_TIME" | "PART_TIME" | "SEASONAL" | ""
   accommodationProvided: "any" | "yes" | "no"
   transportationProvided: "any" | "yes" | "no"
   // Languages
@@ -64,6 +67,7 @@ export const INITIAL_FILTERS: SearchFilters = {
   yearsOfExperienceMax: "",
   incomeMin: "",
   incomeMax: "",
+  workType: "",
   accommodationProvided: "any",
   transportationProvided: "any",
   languages: [],
@@ -78,7 +82,7 @@ function buildRequestBody(filters: SearchFilters): ProfileSearchRequest {
   if (filters.searchQuery) body.search = filters.searchQuery
   if (filters.gender.length === 1) body.gender = filters.gender[0]
   if (filters.maritalStatus.length === 1) body.maritalStatus = filters.maritalStatus[0]
-  if (filters.stateOfOrigin) body.stateOfOrigin = filters.stateOfOrigin
+  if (filters.stateOfOrigin) body.stateOfOrigin = filters.stateOfOrigin 
   if (filters.countryOfResidence) body.countryOfResidence = filters.countryOfResidence
   if (filters.ageMin !== "") body.minAge = filters.ageMin
   if (filters.ageMax !== "") body.maxAge = filters.ageMax
@@ -93,6 +97,7 @@ function buildRequestBody(filters: SearchFilters): ProfileSearchRequest {
   if (filters.yearsOfExperienceMax !== "") body.maxExperienceYears = filters.yearsOfExperienceMax
   if (filters.incomeMin !== "") body.minIncome = filters.incomeMin
   if (filters.incomeMax !== "") body.maxIncome = filters.incomeMax
+  if (filters.workType) body.preferredWorkTypes = filters.workType
   if (filters.accommodationProvided === "yes") body.accommodationRequired = true
   if (filters.accommodationProvided === "no") body.accommodationRequired = false
   if (filters.transportationProvided === "yes") body.transportationRequired = true
@@ -118,6 +123,7 @@ function countActiveFilters(filters: SearchFilters): number {
   if (filters.experienceLevel.length > 0) count++
   if (filters.yearsOfExperienceMin !== "" || filters.yearsOfExperienceMax !== "") count++
   if (filters.incomeMin !== "" || filters.incomeMax !== "") count++
+  if (filters.workType) count++
   if (filters.accommodationProvided !== "any") count++
   if (filters.transportationProvided !== "any") count++
   if (filters.languages.length > 0) count++
@@ -129,6 +135,7 @@ function countActiveFilters(filters: SearchFilters): number {
 const PAGE_SIZE = 20
 
 export function SearchProfilesView() {
+  const { t } = useLanguage()
   const [filters, setFilters] = useState<SearchFilters>(INITIAL_FILTERS)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null)
@@ -141,6 +148,7 @@ export function SearchProfilesView() {
   const [totalElements, setTotalElements] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [hasSearched, setHasSearched] = useState(false)
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
 
   const activeFilterCount = countActiveFilters(filters)
 
@@ -163,10 +171,20 @@ export function SearchProfilesView() {
     }
   }, [])
 
-  // Fetch on mount with empty filters (show all profiles)
+  const fetchFavorites = useCallback(async () => {
+    try {
+      const favs = await getFavorites()
+      setFavoriteIds(new Set(favs.map((f: { id: string }) => f.id)))
+    } catch (err) {
+      console.error("Failed to fetch favorites:", err)
+    }
+  }, [])
+
+  // Fetch on mount with empty filters (show all profiles) and favorites
   useEffect(() => {
     doSearch(INITIAL_FILTERS, 0)
-  }, [doSearch])
+    fetchFavorites()
+  }, [doSearch, fetchFavorites])
 
   const handleSearch = () => {
     setPage(0)
@@ -192,9 +210,9 @@ export function SearchProfilesView() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Search Profiles</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("search.title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Find candidates matching your requirements from the profile database.
+          {t("search.subtitle")}
         </p>
       </div>
 
@@ -203,7 +221,7 @@ export function SearchProfilesView() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by name, position, industry, city, email..."
+            placeholder={t("search.searchPlaceholder")}
             value={filters.searchQuery}
             onChange={(e) => setFilters((f) => ({ ...f, searchQuery: e.target.value }))}
             onKeyDown={handleKeyDown}
@@ -213,7 +231,7 @@ export function SearchProfilesView() {
         <div className="flex items-center gap-2">
           <Button onClick={handleSearch} disabled={loading} className="gap-2">
             {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
-            Search
+            {t("search.searchButton")}
           </Button>
           <Button
             variant="outline"
@@ -222,7 +240,7 @@ export function SearchProfilesView() {
             className="gap-2"
           >
             <SlidersHorizontal className="size-4" />
-            Filters
+            {t("search.filters")}
             {activeFilterCount > 0 && (
               <Badge variant="secondary" className="ml-1 size-5 justify-center rounded-full p-0 text-xs">
                 {activeFilterCount}
@@ -232,7 +250,7 @@ export function SearchProfilesView() {
           {activeFilterCount > 0 && (
             <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 text-muted-foreground">
               <X className="size-3" />
-              Clear all
+              {t("search.clearAll")}
             </Button>
           )}
         </div>
@@ -257,12 +275,6 @@ export function SearchProfilesView() {
             <Badge variant="secondary" className="gap-1">
               Origin: {filters.stateOfOrigin}
               <button type="button" onClick={() => setFilters((f) => ({ ...f, stateOfOrigin: "" }))}><X className="size-3" /></button>
-            </Badge>
-          )}
-          {filters.countryOfResidence && (
-            <Badge variant="secondary" className="gap-1">
-              Origin: {filters.countryOfResidence}
-              <button type="button" onClick={() => setFilters((f) => ({ ...f, countryOfResidence: "" }))}><X className="size-3" /></button>
             </Badge>
           )}
           {(filters.ageMin !== "" || filters.ageMax !== "") && (
@@ -339,13 +351,13 @@ export function SearchProfilesView() {
               {hasSearched && (
                 <>
                   <span className="font-medium text-foreground">{totalElements}</span>{" "}
-                  {totalElements === 1 ? "profile" : "profiles"} found
+                  {totalElements === 1 ? t("search.profileFound") : t("search.profilesFound")}
                 </>
               )}
             </p>
             {totalPages > 1 && (
               <p className="text-xs text-muted-foreground">
-                Page {page + 1} of {totalPages}
+                {t("search.page")} {page + 1} {t("search.of")} {totalPages}
               </p>
             )}
           </div>
@@ -354,20 +366,20 @@ export function SearchProfilesView() {
             <Card className="py-16">
               <CardContent className="flex flex-col items-center justify-center text-center">
                 <Loader2 className="mb-4 size-10 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Searching profiles...</p>
+                <p className="text-sm text-muted-foreground">{t("search.searching")}</p>
               </CardContent>
             </Card>
           ) : profiles.length === 0 && hasSearched ? (
             <Card className="py-16">
               <CardContent className="flex flex-col items-center justify-center text-center">
                 <Users className="mb-4 size-12 text-muted-foreground/50" />
-                <h3 className="text-lg font-semibold text-foreground">No profiles found</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("search.noProfiles")}</h3>
                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  Try adjusting your filters or search query to find matching candidates.
+                  {t("search.noProfilesDesc")}
                 </p>
                 {activeFilterCount > 0 && (
                   <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
-                    Clear all filters
+                    {t("search.clearAllFilters")}
                   </Button>
                 )}
               </CardContent>
@@ -395,7 +407,7 @@ export function SearchProfilesView() {
                     className="gap-1"
                   >
                     <ChevronLeft className="size-4" />
-                    Previous
+                    {t("search.previous")}
                   </Button>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
@@ -430,7 +442,7 @@ export function SearchProfilesView() {
                     onClick={() => handlePageChange(page + 1)}
                     className="gap-1"
                   >
-                    Next
+                    {t("search.next")}
                     <ChevronRight className="size-4" />
                   </Button>
                 </div>
@@ -446,7 +458,7 @@ export function SearchProfilesView() {
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
           <div className="absolute bottom-0 left-0 top-0 w-80 overflow-y-auto border-r border-border bg-background p-4">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">Filters</h3>
+              <h3 className="font-semibold text-foreground">{t("search.mobileFilters")}</h3>
               <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
                 <X className="size-4" />
               </Button>
@@ -463,6 +475,8 @@ export function SearchProfilesView() {
         onOpenChange={(open) => {
           if (!open) setSelectedProfile(null)
         }}
+        isFavorite={selectedProfile ? favoriteIds.has(selectedProfile.id) : false}
+        onFavoriteChange={fetchFavorites}
       />
     </div>
   )

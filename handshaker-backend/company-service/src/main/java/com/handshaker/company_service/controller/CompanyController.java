@@ -1,11 +1,9 @@
 package com.handshaker.company_service.controller;
 
-import com.handshaker.company_service.dto.CompanyResponse;
-import com.handshaker.company_service.dto.JobAdRequest;
-import com.handshaker.company_service.dto.JobAdResponse;
-import com.handshaker.company_service.dto.UpdateCompanyRequest;
-import com.handshaker.company_service.model.JobAd;
+import com.handshaker.company_service.dto.*;
+import com.handshaker.company_service.service.DashboardService;
 import com.handshaker.company_service.service.CompanyService;
+import com.handshaker.company_service.service.FavouriteProfileService;
 import com.handshaker.company_service.service.JobAdService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +17,14 @@ public class CompanyController {
 
     private final CompanyService companyService;
     private final JobAdService jobAdService;
+    private final FavouriteProfileService favouriteProfileService;
+    private final DashboardService dashboardService;
 
-    public CompanyController(CompanyService companyService, JobAdService jobAdService) {
+    public CompanyController(CompanyService companyService, JobAdService jobAdService, FavouriteProfileService favouriteProfileService, DashboardService dashboardService) {
         this.companyService = companyService;
         this.jobAdService = jobAdService;
+        this.favouriteProfileService = favouriteProfileService;
+        this.dashboardService = dashboardService;
     }
 
     @GetMapping("/me")
@@ -52,7 +54,7 @@ public class CompanyController {
 
     @PutMapping("/me/jobs/{id}")
     public JobAdResponse update(
-            @PathVariable String id,
+            @PathVariable UUID id,
             Authentication authentication,
             @RequestBody JobAdRequest job
     ) {
@@ -61,10 +63,51 @@ public class CompanyController {
 
     @DeleteMapping("/me/jobs/{id}")
     public void delete(
-            @PathVariable String id,
+            @PathVariable UUID id,
             Authentication authentication
     ) {
         jobAdService.delete(id, getUserId(authentication));
+    }
+
+    @PostMapping("/me/favourites/{profileId}")
+    public void add(
+            @PathVariable UUID profileId,
+            Authentication authentication
+    ) {
+        favouriteProfileService.addToFavourites(
+                getUserId(authentication),
+                profileId
+        );
+    }
+
+    @GetMapping("/me/favourites")
+    public List<ProfileSummaryDTO> get(Authentication authentication) {
+
+        return favouriteProfileService.getFavourites(
+                getUserId(authentication)
+        );
+    }
+
+    @DeleteMapping("/me/favourites/{profileId}")
+    public void remove(
+            @PathVariable UUID profileId,
+            Authentication authentication
+    ) {
+        favouriteProfileService.remove(
+                getUserId(authentication),
+                profileId
+        );
+    }
+
+    @GetMapping("/dashboard")
+    public CompanyDashboardResponse dashboard(
+            Authentication authentication
+    ) {
+
+        UUID companyId =
+                UUID.fromString(authentication.getPrincipal().toString());
+
+        return dashboardService.getDashboard(companyId);
     }
 
     private UUID getUserId(Authentication authentication) {

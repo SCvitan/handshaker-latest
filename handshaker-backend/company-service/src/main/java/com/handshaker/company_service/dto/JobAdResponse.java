@@ -4,10 +4,11 @@ import com.handshaker.company_service.enums.SalaryType;
 import com.handshaker.company_service.enums.WorkType;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class JobAdResponse {
 
-    private String id;
+    private UUID id;
     private String industry;
     private String position;
     private String description;
@@ -35,11 +36,11 @@ public class JobAdResponse {
         public String country;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

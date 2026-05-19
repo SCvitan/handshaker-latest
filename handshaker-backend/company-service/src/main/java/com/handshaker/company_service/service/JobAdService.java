@@ -60,7 +60,7 @@ public class JobAdService {
         return map(repository.save(job));
     }
 
-    public JobAdResponse update(String id, UUID userId, JobAdRequest updated) {
+    public JobAdResponse update(UUID id, UUID userId, JobAdRequest updated) {
 
         JobAd job = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
@@ -98,7 +98,7 @@ public class JobAdService {
         return map(repository.save(job));
     }
 
-    public void delete(String id, UUID userId) {
+    public void delete(UUID id, UUID userId) {
 
         JobAd job = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Job not found"));

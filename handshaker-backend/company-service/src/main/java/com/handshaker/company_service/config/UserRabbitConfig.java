@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class RabbitConfig {
+public class UserRabbitConfig {
 
     public static final String COMPANY_REGISTERED_QUEUE = "company.user.registered";
 

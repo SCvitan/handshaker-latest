@@ -241,6 +241,15 @@ export interface UserProfile {
   documents: Documentation
 }
 
+export interface ProfileSummary {
+  id: string
+  firstName: string | null
+  lastName: string | null
+  countryOfResidence: string | null
+  profession: string | null
+  profileImageUrl: string | null
+}
+
 export const INITIAL_CV_DATA: CVData = {
   personalInfo: {
     firstName: "",
@@ -379,3 +388,100 @@ export interface JobAd {
 }
 
 export type JobAdCreate = Omit<JobAd, "id" | "createdAt" | "updatedAt">
+
+export type OfferStatus =
+  | "SENT"
+  | "VIEWED"
+  | "INTERESTED"
+  | "REJECTED"
+
+export interface JobOffer {
+  id: string
+
+  companyId: string
+  workerId: string
+
+  status: OfferStatus
+
+  sentAt: string
+  respondedAt?: string
+
+  jobAdId: string
+
+  industry: string
+  position: string
+  description: string
+
+  location: {
+    street: string
+    streetNumber: string
+    city: string
+    postalCode: string
+    country: string
+  }
+
+  workType: "FULL_TIME" | "PART_TIME" | "SEASONAL"
+
+  salaryType: "MONTHLY" | "HOURLY"
+  salaryAmount: number
+
+  workingHoursPerDay: number
+  workingDaysPerMonth: number
+
+  accommodationProvided: boolean
+  transportationProvided: boolean
+
+  // optional (future)
+  worker?: {
+    id: string
+    firstName: string
+    lastName: string
+    profileImageUrl?: string | null
+  }
+}
+
+export interface DashboardStats {
+  totalCandidates: number
+  awaitingResponse: number
+  interested: number
+  contactUnlocked: number
+  rejected: number
+}
+
+export interface CandidateProcess {
+
+  id: string
+
+  offerId: string
+  workerId: string
+
+  firstName: string
+  lastName: string
+  country: string | null
+
+  position: string
+  industry: string
+
+  status:
+    | "SENT"
+    | "VIEWED"
+    | "INTERESTED"
+    | "CONTACT_UNLOCKED"
+    | "REJECTED"
+
+  hasWorkPermit: boolean
+  inAnotherProcess: boolean
+
+  contactUnlocked: boolean
+
+  salaryAmount: number
+
+  sentAt: string
+  viewedAt: string | null
+}
+
+export interface CompanyDashboardResponse {
+  tokensRemaining: number
+  stats: DashboardStats
+  candidates: CandidateProcess[]
+}

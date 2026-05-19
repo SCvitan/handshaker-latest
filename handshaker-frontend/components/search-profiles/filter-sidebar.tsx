@@ -27,6 +27,7 @@ import {
   INDUSTRIES,
   COUNTRIES,
   POSITION_OPTIONS,
+  WORK_TYPE_OPTIONS,
 } from "@/lib/cv-types"
 
 interface FilterSidebarProps {
@@ -89,27 +90,6 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
               <Select
                 value={filters.stateOfOrigin || "ALL"}
                 onValueChange={(v) => update({ stateOfOrigin: v === "ALL" ? "" : v })}
-              >
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue placeholder="Any country" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Any</SelectItem>
-                  {COUNTRIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* State of Residence */}
-            <div>
-              <Label className="mb-1.5 block text-xs font-medium text-muted-foreground">State of Residence</Label>
-              <Select
-                value={filters.countryOfResidence || "ALL"}
-                onValueChange={(v) => update({ countryOfResidence: v === "ALL" ? "" : v })}
               >
                 <SelectTrigger className="h-8 text-sm">
                   <SelectValue placeholder="Any country" />
@@ -251,6 +231,27 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
                   Select an industry first
                 </div>
               )}
+            </div>
+
+            {/* Work Type */}
+            <div>
+              <Label className="mb-1.5 block text-xs font-medium text-muted-foreground">Work Type</Label>
+              <Select
+                value={filters.workType || "ALL"}
+                onValueChange={(v) => update({ workType: v === "ALL" ? "" : v as "FULL_TIME" | "PART_TIME" | "SEASONAL" })}
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Any</SelectItem>
+                  {WORK_TYPE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Experience Level */}

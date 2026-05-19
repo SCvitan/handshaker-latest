@@ -1,2 +1,5 @@
+com/handshaker/events/offer/OfferRejectedEvent.class
+com/handshaker/events/offer/OfferInterestedEvent.class
+com/handshaker/events/offer/OfferSentEvent.class
 com/handshaker/events/App.class
 com/handshaker/events/UserRegisteredEvent.class

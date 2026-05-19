@@ -1,6 +1,7 @@
 package com.handshaker.profiles_service.service;
 
 import com.handshaker.profiles_service.dto.UserProfileSearchRequest;
+import com.handshaker.profiles_service.enums.WorkType;
 import com.handshaker.profiles_service.model.*;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
@@ -156,6 +157,17 @@ public class UserProfileSpecifications {
                         job.get("transportationRequired"),
                         request.getTransportationRequired()
                 ));
+            }
+
+            // Preferred Work Types
+            if (request.getPreferredWorkTypes() != null && !request.getPreferredWorkTypes().isEmpty()) {
+
+                Join<JobPreferences, WorkType> workTypeJoin =
+                        job.join("preferredWorkTypes", JoinType.LEFT);
+
+                predicates.add(
+                        workTypeJoin.in(request.getPreferredWorkTypes())
+                );
             }
 
             // City (from work address)
