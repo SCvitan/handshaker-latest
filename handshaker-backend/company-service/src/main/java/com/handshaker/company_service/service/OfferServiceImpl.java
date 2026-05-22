@@ -166,10 +166,6 @@ public class OfferServiceImpl implements OfferServiceInterface {
             throw new RuntimeException("Not premium");
         }
 
-        if (company.getContactTokensRemaining() <= 0) {
-            throw new RuntimeException("No tokens");
-        }
-
         JobAd jobAd = jobAdRepository.findById(request.getJobAdId())
                 .orElseThrow();
 

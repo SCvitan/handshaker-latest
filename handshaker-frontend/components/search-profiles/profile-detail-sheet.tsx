@@ -6,7 +6,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -17,17 +16,17 @@ import {
   Shield,
   Briefcase,
   Languages,
-  MapPin,
   Building,
   HardHat,
-  Mail,
-  Phone,
-  Calendar,
   Clock,
-  Heart,
   Loader2,
   Save,
   SendHorizonal,
+  Lock,
+  CheckCircle2,
+  Phone,
+  Mail,
+  MapPin,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { UserProfile } from "@/lib/cv-types";
@@ -39,19 +38,30 @@ interface ProfileDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   isFavorite?: boolean;
   onFavoriteChange?: () => void;
+
+  // future states
+  hasUnlockedContact?: boolean;
+  hasPendingOffer?: boolean;
 }
 
 function calculateAge(dateOfBirth: string): number {
   const dob = new Date(dateOfBirth);
   const today = new Date();
+
   let age = today.getFullYear() - dob.getFullYear();
+
   const m = today.getMonth() - dob.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+
   return age;
 }
 
 function formatDate(d: string | null) {
   if (!d) return "-";
+
   return new Date(d).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
@@ -59,10 +69,26 @@ function formatDate(d: string | null) {
   });
 }
 
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
+function formatEnum(value?: string | null) {
+  if (!value) return "-";
+
   return (
-    <div className="flex items-start justify-between gap-4 py-1.5 text-sm">
+    value.replace(/_/g, " ").charAt(0) +
+    value.replace(/_/g, " ").slice(1).toLowerCase()
+  );
+}
+
+function Row({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2 text-sm">
       <span className="shrink-0 text-muted-foreground">{label}</span>
+
       <span className="text-right font-medium text-foreground">
         {value || "-"}
       </span>
@@ -76,6 +102,8 @@ export function ProfileDetailSheet({
   onOpenChange,
   isFavorite = false,
   onFavoriteChange,
+  hasUnlockedContact = false,
+  hasPendingOffer = false,
 }: ProfileDetailSheetProps) {
   const [isToggling, setIsToggling] = useState(false);
 
@@ -93,12 +121,14 @@ export function ProfileDetailSheet({
 
   const handleToggleFavorite = async () => {
     setIsToggling(true);
+
     try {
       if (isFavorite) {
         await removeFromFavorites(profile.id);
       } else {
         await addToFavorites(profile.id);
       }
+
       onFavoriteChange?.();
     } catch (err) {
       console.error("Failed to toggle favorite:", err);
@@ -106,174 +136,252 @@ export function ProfileDetailSheet({
       setIsToggling(false);
     }
   };
+
   const completion = Math.round((profile.profileCompletion || 0) * 100);
+
   const age = personalInfo.dateOfBirth
     ? calculateAge(personalInfo.dateOfBirth)
     : null;
+
   const initials =
     personalInfo.firstName && personalInfo.lastName
       ? `${personalInfo.firstName[0]}${personalInfo.lastName[0]}`.toUpperCase()
       : "?";
 
+  // future field
+  const availabilityStatus = "AVAILABLE_NOW";
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
-        <SheetHeader className="pb-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4 min-w-0 flex-1">
-              <Avatar className="size-16 shrink-0">
-                <AvatarImage
-                  src={profile.profileImageUrl ?? undefined}
-                  alt={`${personalInfo.firstName} ${personalInfo.lastName}`}
-                />
-                <AvatarFallback className="text-lg font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <SheetTitle className="text-xl">
-                  {personalInfo.firstName} {personalInfo.lastName}
-                </SheetTitle>
-                <SheetDescription>{profile.email}</SheetDescription>
+      <SheetContent className="w-full overflow-y-auto border-l bg-background sm:max-w-2xl">
+        {/* Sticky action bar */}
+        <div className="sticky top-0 z-30 -mx-6 mb-6 border-b bg-background/95 px-6 py-4 backdrop-blur">
+          <div className="flex flex-col gap-4">
+            <SheetHeader className="space-y-0">
+              <div className="flex items-start gap-4">
+                <Avatar className="size-16 shrink-0 border">
+                  <AvatarImage
+                    src={profile.profileImageUrl ?? undefined}
+                    alt={`${personalInfo.firstName} ${personalInfo.lastName}`}
+                  />
+
+                  <AvatarFallback className="text-lg font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <SheetTitle className="text-2xl">
+                      {personalInfo.firstName} {personalInfo.lastName}
+                    </SheetTitle>
+
+                    <Badge
+                      variant="secondary"
+                      className="border-green-200 bg-green-50 text-green-700"
+                    >
+                      <CheckCircle2 className="mr-1 size-3.5" />
+                      Available now
+                    </Badge>
+
+                    {legalStatus.hasCroatianWorkPermit && (
+                      <Badge variant="outline">
+                        <Shield className="mr-1 size-3" />
+                        Work Permit
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                    {jobPreferences.desiredPosition && (
+                      <div className="flex items-center gap-1">
+                        <Briefcase className="size-3.5" />
+                        {jobPreferences.desiredPosition}
+                      </div>
+                    )}
+
+                    {accommodation?.address?.city && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="size-3.5" />
+                        {accommodation.address.city}
+                      </div>
+                    )}
+
+                    {age && <span>{age} yrs</span>}
+                  </div>
+                </div>
               </div>
+            </SheetHeader>
+
+            {/* CTA buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant={isFavorite ? "default" : "outline"}
+                onClick={handleToggleFavorite}
+                disabled={isToggling}
+                className="flex-1"
+              >
+                {isToggling ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 size-4" />
+                )}
+
+                {isFavorite ? "Saved" : "Save Candidate"}
+              </Button>
+
+              <Button
+                className="flex-1"
+                disabled={hasPendingOffer}
+              >
+                <SendHorizonal className="mr-2 size-4" />
+
+                {hasPendingOffer ? "Offer Sent" : "Send Offer"}
+              </Button>
             </div>
-          </div>
-        </SheetHeader>
-        <div className="sticky top-0 z-10 bg-background pb-4">
-          <div className="flex gap-2">
-            <Button
-              variant={isFavorite ? "default" : "outline"}
-              onClick={handleToggleFavorite}
-              disabled={isToggling}
-              className="flex-1"
-            >
-              {isToggling ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 size-4" />
-              )}
-
-              {isFavorite ? "Saved" : "Save Candidate"}
-            </Button>
-
-            <Button className="flex-1">
-              <SendHorizonal className="mr-2 size-4" />
-              Send Offer
-            </Button>
           </div>
         </div>
 
+        {/* Profile completion */}
+        <section className="mb-6">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              Profile Completion
+            </span>
+
+            <span
+              className={`text-sm font-semibold ${
+                completion >= 80
+                  ? "text-green-600"
+                  : completion >= 50
+                  ? "text-amber-600"
+                  : "text-red-500"
+              }`}
+            >
+              {completion}%
+            </span>
+          </div>
+
+          <Progress value={completion} className="h-2" />
+        </section>
+
+        {/* Contact section */}
+        <section className="mb-6 rounded-xl border bg-muted/30 p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Contact Information
+              </h3>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Contact details unlock after candidate accepts your offer.
+              </p>
+            </div>
+
+            {!hasUnlockedContact && (
+              <Lock className="size-4 text-muted-foreground" />
+            )}
+          </div>
+
+          {hasUnlockedContact ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm">
+                <Mail className="size-4 text-muted-foreground" />
+                {profile.email}
+              </div>
+
+              <div className="flex items-center gap-2 text-sm">
+                <Phone className="size-4 text-muted-foreground" />
+                {personalInfo.mobilePhoneNumber || "-"}
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed bg-background p-4 text-center">
+              <Lock className="mx-auto mb-2 size-5 text-muted-foreground" />
+
+              <p className="text-sm font-medium text-foreground">
+                Contact details are locked
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Send an offer → candidate accepts → unlock contact using
+                company tokens.
+              </p>
+            </div>
+          )}
+        </section>
+
         {/* Personal Info */}
-        <section className="mb-5">
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+        <section className="mb-6">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <User className="size-4 text-primary" />
-            Personal Info
+            Personal Information
           </h4>
-          <div className="rounded-md border border-border bg-muted/30 px-3 py-1">
+
+          <div className="rounded-xl border bg-muted/30 p-4">
             <Row
               label="Full Name"
               value={`${personalInfo.firstName} ${personalInfo.lastName}`}
             />
-            <Row label="Age" value={age !== null ? `${age} years` : "-"} />
+
+            <Separator />
+
+            <Row label="Age" value={age ? `${age} years` : "-"} />
+
+            <Separator />
+
             <Row
               label="Gender"
-              value={
-                personalInfo.gender
-                  ? personalInfo.gender.charAt(0) +
-                    personalInfo.gender.slice(1).toLowerCase()
-                  : "-"
-              }
+              value={formatEnum(personalInfo.gender)}
             />
+
+            <Separator />
+
             <Row
               label="Date of Birth"
               value={formatDate(personalInfo.dateOfBirth)}
             />
-            <Row label="State of Origin" value={personalInfo.stateOfOrigin} />
-            <Row label="Phone" value={personalInfo.mobilePhoneNumber} />
+
+            <Separator />
+
+            <Row
+              label="State of Origin"
+              value={personalInfo.stateOfOrigin}
+            />
           </div>
         </section>
-
-        <Separator className="my-4" />
-
-        {/* Legal Status */}
-        <section className="mb-5">
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Shield className="size-4 text-primary" />
-            Legal Status
-          </h4>
-          <div className="rounded-md border border-border bg-muted/30 px-3 py-1">
-            <Row
-              label="Work Permit"
-              value={
-                <Badge
-                  variant={
-                    legalStatus.hasCroatianWorkPermit ? "secondary" : "outline"
-                  }
-                >
-                  {legalStatus.hasCroatianWorkPermit ? "Yes" : "No"}
-                </Badge>
-              }
-            />
-            {legalStatus.hasCroatianWorkPermit && (
-              <Row
-                label="Permit Expires"
-                value={formatDate(legalStatus.workPermitExpirationDate)}
-              />
-            )}
-            <Row
-              label="Employed in Croatia"
-              value={
-                <Badge
-                  variant={
-                    legalStatus.currentlyEmployedInCroatia
-                      ? "secondary"
-                      : "outline"
-                  }
-                >
-                  {legalStatus.currentlyEmployedInCroatia ? "Yes" : "No"}
-                </Badge>
-              }
-            />
-            <Row
-              label="Arrived in Croatia"
-              value={formatDate(legalStatus.dateOfArrivalInCroatia)}
-            />
-            <Row
-              label="Passport Expires"
-              value={formatDate(legalStatus.passportExpirationDate)}
-            />
-            <Row label="OIB" value={legalStatus.oib} />
-          </div>
-        </section>
-
-        <Separator className="my-4" />
 
         {/* Job Preferences */}
-        <section className="mb-5">
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+        <section className="mb-6">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <Briefcase className="size-4 text-primary" />
             Job Preferences
           </h4>
-          <div className="rounded-md border border-border bg-muted/30 px-3 py-1">
-            <Row label="Industry" value={jobPreferences.desiredIndustry} />
-            <Row label="Position" value={jobPreferences.desiredPosition} />
+
+          <div className="rounded-xl border bg-muted/30 p-4">
             <Row
-              label="Work Type"
-              value={
-                jobPreferences.preferredWorkTypes &&
-                jobPreferences.preferredWorkTypes.length > 0
-                  ? jobPreferences.preferredWorkTypes
-                      .map(
-                        (t) =>
-                          t.replace(/_/g, " ").charAt(0) +
-                          t.replace(/_/g, " ").slice(1).toLowerCase()
-                      )
-                      .join(", ")
-                  : "-"
-              }
+              label="Industry"
+              value={jobPreferences.desiredIndustry}
             />
+
+            <Separator />
+
             <Row
-              label="Expected Income"
+              label="Position"
+              value={jobPreferences.desiredPosition}
+            />
+
+            <Separator />
+
+            <Row
+              label="Experience"
+              value={formatEnum(jobPreferences.experienceLevel)}
+            />
+
+            <Separator />
+
+            <Row
+              label="Expected Salary"
               value={
                 typeof jobPreferences.expectedMonthlyIncome === "number"
                   ? `EUR ${jobPreferences.expectedMonthlyIncome.toLocaleString()}/mo`
@@ -282,28 +390,9 @@ export function ProfileDetailSheet({
                   : "-"
               }
             />
-            <Row
-              label="Experience Level"
-              value={
-                jobPreferences.experienceLevel
-                  ? jobPreferences.experienceLevel
-                      .replace(/_/g, " ")
-                      .charAt(0) +
-                    jobPreferences.experienceLevel
-                      .replace(/_/g, " ")
-                      .slice(1)
-                      .toLowerCase()
-                  : "-"
-              }
-            />
-            <Row
-              label="Working Hours"
-              value={
-                jobPreferences.desiredWorkingHoursPerDay
-                  ? `${jobPreferences.desiredWorkingHoursPerDay}h/day, ${jobPreferences.desiredWorkingDaysPerMonth} days/mo`
-                  : "-"
-              }
-            />
+
+            <Separator />
+
             <Row
               label="Accommodation"
               value={
@@ -315,39 +404,22 @@ export function ProfileDetailSheet({
                   }
                 >
                   {jobPreferences.accommodationRequired
-                    ? "Needed"
-                    : "Not needed"}
-                </Badge>
-              }
-            />
-            <Row
-              label="Transportation"
-              value={
-                <Badge
-                  variant={
-                    jobPreferences.transportationRequired
-                      ? "secondary"
-                      : "outline"
-                  }
-                >
-                  {jobPreferences.transportationRequired
-                    ? "Needed"
-                    : "Not needed"}
+                    ? "Required"
+                    : "Not required"}
                 </Badge>
               }
             />
           </div>
         </section>
 
-        <Separator className="my-4" />
-
         {/* Languages */}
-        <section className="mb-5">
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+        <section className="mb-6">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <Languages className="size-4 text-primary" />
-            Languages ({languages.length})
+            Languages
           </h4>
-          <div className="space-y-2">
+
+          <div className="space-y-3">
             {languages.length > 0 ? (
               languages.map((lang, i) => {
                 const avg = (
@@ -357,165 +429,197 @@ export function ProfileDetailSheet({
                     lang.understanding) /
                   4
                 ).toFixed(1);
+
                 return (
                   <div
                     key={`${lang.language}-${i}`}
-                    className="rounded-md border border-border bg-muted/30 px-3 py-2"
+                    className="rounded-xl border bg-muted/30 p-4"
                   >
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">
-                        {lang.language
-                          ? lang.language.charAt(0) +
-                            lang.language.slice(1).toLowerCase()
-                          : "-"}
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="font-medium">
+                        {formatEnum(lang.language)}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        Avg: {avg}/10
-                      </span>
+
+                      <Badge variant="secondary">
+                        Avg {avg}/10
+                      </Badge>
                     </div>
-                    <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
+
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                       <span>Written: {lang.written}</span>
                       <span>Spoken: {lang.spoken}</span>
                       <span>Reading: {lang.reading}</span>
-                      <span>Understand: {lang.understanding}</span>
+                      <span>Understanding: {lang.understanding}</span>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
                 No languages listed.
-              </p>
+              </div>
             )}
           </div>
         </section>
 
-        <Separator className="my-4" />
-
-        {/* Accommodation */}
-        <section className="mb-5">
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Building className="size-4 text-primary" />
-            Accommodation
-          </h4>
-          <div className="rounded-md border border-border bg-muted/30 px-3 py-1">
-            <Row
-              label="Address"
-              value={
-                accommodation.address?.street
-                  ? `${accommodation.address.street} ${
-                      accommodation.address.houseNumber || ""
-                    }, ${accommodation.address.postalCode || ""} ${
-                      accommodation.address.city
-                    }`
-                  : "-"
-              }
-            />
-            <Row
-              label="Provider"
-              value={
-                accommodation.provider
-                  ? accommodation.provider.charAt(0) +
-                    accommodation.provider.slice(1).toLowerCase()
-                  : "-"
-              }
-            />
-            <Row
-              label="Type"
-              value={
-                accommodation.type
-                  ? accommodation.type.replace(/_/g, " ").charAt(0) +
-                    accommodation.type.replace(/_/g, " ").slice(1).toLowerCase()
-                  : "-"
-              }
-            />
-            <Row
-              label="People in Room"
-              value={
-                accommodation.peopleInRoom
-                  ? accommodation.peopleInRoom.replace(/_/g, " ").charAt(0) +
-                    accommodation.peopleInRoom
-                      .replace(/_/g, " ")
-                      .slice(1)
-                      .toLowerCase()
-                  : "-"
-              }
-            />
-          </div>
-        </section>
-
-        <Separator className="my-4" />
-
-        {/* Education */}
-        <section className="mb-5">
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <HardHat className="size-4 text-primary" />
-            Education
-          </h4>
-          <div className="rounded-md border border-border bg-muted/30 px-3 py-1">
-            <Row
-              label="Highest Level"
-              value={
-                education?.highestLevel
-                  ? education.highestLevel.replace(/_/g, " ").charAt(0) +
-                    education.highestLevel
-                      .replace(/_/g, " ")
-                      .slice(1)
-                      .toLowerCase()
-                  : "-"
-              }
-            />
-            <Row label="School" value={education?.schoolName} />
-            <Row label="Title Acquired" value={education?.titleAcquired} />
-            <Row label="Country" value={education?.country} />
-            <Row label="Year Finished" value={education?.dateFinished} />
-          </div>
-        </section>
-
-        <Separator className="my-4" />
-
-        {/* Work Experiences */}
-        <section className="mb-5">
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+        {/* Work Experience */}
+        <section className="mb-6">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <Clock className="size-4 text-primary" />
-            Work Experience ({workExperiences?.length || 0})
+            Work Experience
           </h4>
-          <div className="space-y-2">
-            {workExperiences && workExperiences.length > 0 ? (
+
+          <div className="space-y-3">
+            {workExperiences?.length ? (
               workExperiences.map((exp, i) => (
                 <div
                   key={`${exp.companyName}-${i}`}
-                  className="rounded-md border border-border bg-muted/30 px-3 py-2"
+                  className="rounded-xl border bg-muted/30 p-4"
                 >
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">
-                      {exp.companyName}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h5 className="font-medium text-foreground">
+                        {exp.position}
+                      </h5>
+
+                      <p className="text-sm text-muted-foreground">
+                        {exp.companyName}
+                      </p>
+                    </div>
+
+                    <Badge variant="outline">
                       {exp.yearsOfExperience === "LESS_THAN_1"
-                        ? "< 1 yr"
+                        ? "<1 year"
                         : exp.yearsOfExperience === "5_PLUS"
-                        ? "5+ yrs"
-                        : `${exp.yearsOfExperience} yr${
-                            exp.yearsOfExperience !== "1" ? "s" : ""
-                          }`}
-                    </span>
+                        ? "5+ years"
+                        : `${exp.yearsOfExperience} years`}
+                    </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {exp.position}
-                  </p>
+
                   {exp.shortDescription && (
-                    <p className="mt-1 text-xs text-muted-foreground/80">
+                    <p className="mt-3 text-sm text-muted-foreground">
                       {exp.shortDescription}
                     </p>
                   )}
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
                 No work experience listed.
-              </p>
+              </div>
             )}
+          </div>
+        </section>
+
+        {/* Education */}
+        <section className="mb-6">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <HardHat className="size-4 text-primary" />
+            Education
+          </h4>
+
+          <div className="rounded-xl border bg-muted/30 p-4">
+            <Row
+              label="Highest Level"
+              value={formatEnum(education?.highestLevel)}
+            />
+
+            <Separator />
+
+            <Row label="School" value={education?.schoolName} />
+
+            <Separator />
+
+            <Row
+              label="Title"
+              value={education?.titleAcquired}
+            />
+
+            <Separator />
+
+            <Row label="Country" value={education?.country} />
+          </div>
+        </section>
+
+        {/* Legal */}
+        <section className="mb-6">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <Shield className="size-4 text-primary" />
+            Legal Status
+          </h4>
+
+          <div className="rounded-xl border bg-muted/30 p-4">
+            <Row
+              label="Work Permit"
+              value={
+                <Badge
+                  variant={
+                    legalStatus.hasCroatianWorkPermit
+                      ? "secondary"
+                      : "outline"
+                  }
+                >
+                  {legalStatus.hasCroatianWorkPermit ? "Yes" : "No"}
+                </Badge>
+              }
+            />
+
+            <Separator />
+
+            <Row
+              label="Currently Employed"
+              value={
+                <Badge
+                  variant={
+                    legalStatus.currentlyEmployedInCroatia
+                      ? "secondary"
+                      : "outline"
+                  }
+                >
+                  {legalStatus.currentlyEmployedInCroatia
+                    ? "Yes"
+                    : "No"}
+                </Badge>
+              }
+            />
+
+            <Separator />
+
+            <Row
+              label="Passport Expires"
+              value={formatDate(
+                legalStatus.passportExpirationDate
+              )}
+            />
+          </div>
+        </section>
+
+        {/* Accommodation */}
+        <section className="pb-8">
+          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <Building className="size-4 text-primary" />
+            Accommodation
+          </h4>
+
+          <div className="rounded-xl border bg-muted/30 p-4">
+            <Row
+              label="City"
+              value={accommodation.address?.city}
+            />
+
+            <Separator />
+
+            <Row
+              label="Type"
+              value={formatEnum(accommodation.type)}
+            />
+
+            <Separator />
+
+            <Row
+              label="Provider"
+              value={formatEnum(accommodation.provider)}
+            />
           </div>
         </section>
       </SheetContent>

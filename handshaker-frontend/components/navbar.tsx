@@ -52,12 +52,20 @@ export function Navbar() {
 
         <nav className="hidden items-center gap-6 md:flex">
           {user && user.role === "USER" && (
-            <Link
-              href="/profile"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t("nav.myProfile")}
-            </Link>
+            <>
+              <Link
+                href="/profile"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {t("nav.myProfile")}
+              </Link>
+              <Link
+                href="/worker-offers"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                My Offers
+              </Link>
+            </>
           )}
           {user && user.role === "COMPANY" && (
             <>

@@ -46,7 +46,7 @@ public class ProfileClient {
     public WorkerSummaryResponse getDashboardProfile(UUID workerId) {
 
         String url =
-                "http://profiles-service:8083/api/users/" +
+                "http://profiles-service:8083/api/users/batch/" +
                         workerId +
                         "/dashboard-summary";
 

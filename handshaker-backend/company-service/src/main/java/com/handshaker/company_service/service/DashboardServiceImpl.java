@@ -49,11 +49,14 @@ public class DashboardServiceImpl implements DashboardService {
                 .count();
 
         int interested = (int) offers.stream()
-                .filter(o -> o.getStatus() == OfferStatus.INTERESTED)
+                .filter(o ->
+                        o.getStatus() == OfferStatus.INTERESTED
+                                && !o.isContactUnlocked()
+                )
                 .count();
 
         int contactUnlocked = (int) offers.stream()
-                .filter(o -> o.getStatus() == OfferStatus.CONTACT_UNLOCKED)
+                .filter(JobOffer::isContactUnlocked)
                 .count();
 
         int rejected = (int) offers.stream()
@@ -84,12 +87,15 @@ public class DashboardServiceImpl implements DashboardService {
 
     private CandidateProcessResponse mapToCandidateProcess(JobOffer offer) {
 
-        // 🔥 Fetch minimal worker info
         WorkerSummaryResponse worker =
                 workerProfileClient.getDashboardProfile(offer.getWorkerId());
 
-        boolean contactUnlocked =
-                offer.getStatus() == OfferStatus.CONTACT_UNLOCKED;
+        boolean contactUnlocked = offer.isContactUnlocked();
+
+        String status =
+                contactUnlocked
+                        ? "CONTACT_UNLOCKED"
+                        : offer.getStatus().name();
 
         return new CandidateProcessResponse(
 
@@ -104,7 +110,7 @@ public class DashboardServiceImpl implements DashboardService {
                 offer.getPosition(),
                 offer.getIndustry(),
 
-                offer.getStatus().name(),
+                status,
 
                 worker.hasWorkPermit(),
                 worker.inAnotherProcess(),

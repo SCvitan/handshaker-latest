@@ -385,6 +385,20 @@ public class UserProfilesService {
                 .toList();
     }
 
+    public WorkerSummaryResponse getDashboardSummary(UUID id) {
+
+        UserProfile profile = repository.findById(id)
+                .orElseThrow();
+
+        return new WorkerSummaryResponse(
+                profile.getPersonalInfo().getFirstName(),
+                profile.getPersonalInfo().getLastName(),
+                profile.getPersonalInfo().getCountryOfCurrentResidence(),
+                profile.getLegalStatus().isHasCroatianWorkPermit(),
+                false // inAnotherProcess for now
+        );
+    }
+
     private ProfileSummaryDTO mapToSummary(UserProfile profile) {
 
         ProfileSummaryDTO dto = new ProfileSummaryDTO();

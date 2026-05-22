@@ -54,6 +54,18 @@ export async function fetchProfile(): Promise<UserProfile> {
   return json as UserProfile
 }
 
+export async function getUserProfileById(id: string): Promise<UserProfile> {
+  const res = await authFetch(`${API_BASE}/users/${id}`, {
+    method: "GET",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch profile");
+  }
+
+  return res.json();
+}
+
 export async function savePersonalInfo(data: PersonalInfo) {
   return authFetch(`${API_BASE}/users/me/personal`, {
     method: "PUT",
@@ -194,6 +206,16 @@ export async function deleteDocument(documentId: string): Promise<void> {
 
 const COMPANY_API_BASE = "http://localhost:8082/api"
 //const COMPANY_API_BASE = "http://142.132.181.45:8082"
+
+export async function sendJobOffer(data: {
+  jobAdId: string
+  workerId: string
+}) {
+  return authFetch(`${COMPANY_API_BASE}/company/offers`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+}
 
 export interface CompanyProfile {
   id: string
@@ -429,7 +451,7 @@ export async function unlockCandidateContact(
 ): Promise<void> {
 
   await authFetch(
-    `${COMPANY_API_BASE}/offers/${offerId}/unlock-contact`,
+    `${COMPANY_API_BASE}/company/offers/${offerId}/unlock-contact`,
     {
       method: "POST",
       credentials: "include"

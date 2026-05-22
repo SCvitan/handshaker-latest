@@ -4,6 +4,7 @@ import com.handshaker.company_service.dto.JobOfferResponse;
 import com.handshaker.company_service.dto.SendOfferRequest;
 import com.handshaker.company_service.dto.SendOfferResponse;
 import com.handshaker.company_service.repository.OfferServiceInterface;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,6 +44,20 @@ public class CompanyOfferController {
             Authentication authentication
     ) {
         return offerService.getCompanyOffer(getUserId(authentication), id);
+    }
+
+    @PostMapping("/{offerId}/unlock-contact")
+    public ResponseEntity<Void> unlockContact(
+            @PathVariable UUID offerId,
+            Authentication authentication
+    ) {
+
+        UUID companyId =
+                UUID.fromString(authentication.getPrincipal().toString());
+
+        offerService.unlockContact(companyId, offerId);
+
+        return ResponseEntity.ok().build();
     }
 
     private UUID getUserId(Authentication authentication) {

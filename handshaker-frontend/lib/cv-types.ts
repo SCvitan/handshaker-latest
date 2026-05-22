@@ -450,9 +450,8 @@ export interface DashboardStats {
 
 export interface CandidateProcess {
 
-  id: string
+  processId: string
 
-  offerId: string
   workerId: string
 
   firstName: string

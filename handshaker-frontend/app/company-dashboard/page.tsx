@@ -1,36 +1,27 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
-  Briefcase,
   Coins,
-  Eye,
   Loader2,
-  Mail,
-  MapPin,
-  Phone,
-  Search,
   Users,
-  XCircle,
   CheckCircle2,
   Clock3,
-  ShieldCheck,
+  Phone,
+  SendHorizonal,
+  Eye,
   ArrowUpRight,
+  XCircle,
 } from "lucide-react";
 
-import { useAuth } from "@/components/auth-provider";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
 import {
   Select,
   SelectContent,
@@ -38,87 +29,153 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+import { useAuth } from "@/components/auth-provider";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { fetchCompanyDashboard, unlockCandidateContact } from "@/lib/cv-api";
+  fetchCompanyDashboard,
+  unlockCandidateContact,
+  getFavorites,
+  getUserProfileById,
+  fetchCompanyJobs,
+  sendJobOffer,
+} from "@/lib/cv-api";
+
 import type {
   CompanyDashboardResponse,
   CandidateProcess,
+  ProfileSummary,
+  UserProfile,
+  JobAd,
 } from "@/lib/cv-types";
+
+import { ProfileDetailSheet } from "@/components/search-profiles/profile-detail-sheet";
 
 export default function CompanyDashboardPage() {
   const { user, isLoading } = useAuth();
-  const router = useRouter();
 
   const [isFetching, setIsFetching] = useState(true);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
+  const [dashboardTab, setDashboardTab] = useState("pipeline");
+
   const [dashboard, setDashboard] = useState<CompanyDashboardResponse | null>(
     null
   );
-  const [candidates, setCandidates] = useState<CandidateProcess[]>([]);
 
+  const [candidates, setCandidates] = useState<CandidateProcess[]>([]);
+  const [savedCandidates, setSavedCandidates] = useState<ProfileSummary[]>([]);
+
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const [jobs, setJobs] = useState<JobAd[]>([]);
+
+  const [offerModalOpen, setOfferModalOpen] = useState(false);
+
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
+
+  const [selectedJobId, setSelectedJobId] = useState<string>("");
+
+  const [isSendingOffer, setIsSendingOffer] = useState(false);
+
+  // PROFILE SHEET STATE
+  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(
+    null
+  );
+  const [profileCache, setProfileCache] = useState<Record<string, UserProfile>>(
+    {}
+  );
+
+  const getProfileId = (c: { id?: string; workerId?: string }) =>
+    c.workerId ?? c.id!;
+
+  // LOAD DATA
   useEffect(() => {
     if (!isLoading && user?.role === "COMPANY") {
-      fetchCompanyDashboard()
-        .then((data) => {
-          setDashboard(data);
-          setCandidates(data.candidates);
+      Promise.all([fetchCompanyDashboard(), getFavorites(), fetchCompanyJobs()])
+        .then(([dash, favs, jobsData]) => {
+          setDashboard(dash);
+          setCandidates(dash.candidates);
+          setSavedCandidates(favs);
+          setJobs(jobsData);
         })
-        .catch(console.error)
         .finally(() => setIsFetching(false));
     }
   }, [isLoading, user]);
 
   const stats = dashboard?.stats;
 
-  const filteredCandidates = useMemo(() => {
-    return candidates.filter(candidate => {
-  
-      const fullName =
-        `${candidate.firstName ?? ""} ${candidate.lastName ?? ""}`
-          .toLowerCase()
-  
-      const position =
-        candidate.position?.toLowerCase() ?? ""
-  
-      const country =
-        candidate.country?.toLowerCase() ?? ""
-  
-      const searchValue = search.toLowerCase()
-  
-      const searchOk =
-        fullName.includes(searchValue) ||
-        position.includes(searchValue) ||
-        country.includes(searchValue)
-  
-      const statusOk =
-        statusFilter === "ALL" ||
-        candidate.status === statusFilter
-  
-      return searchOk && statusOk
-    })
-  }, [candidates, search, statusFilter])
-
-  const unlockContact = async (candidateId: string) => {
+  // PROFILE OPEN (CACHE + FETCH)
+  const openProfile = async (id: string) => {
     try {
-      await unlockCandidateContact(candidateId);
+      setIsProfileLoading(true);
+
+      // cache hit → instant open
+      const cached = profileCache[id];
+      if (cached) {
+        setSelectedProfile(cached);
+        setIsOpen(true);
+        return;
+      }
+
+      const profile = await getUserProfileById(id);
+
+      setProfileCache((prev) => ({
+        ...prev,
+        [id]: profile,
+      }));
+
+      setSelectedProfile(profile);
+      setIsOpen(true);
+    } finally {
+      setIsProfileLoading(false);
+    }
+  };
+
+  // FILTER PIPELINE
+  const filteredCandidates = useMemo(() => {
+    return candidates.filter((c) => {
+      const name = `${c.firstName ?? ""} ${c.lastName ?? ""}`.toLowerCase();
+      const searchOk =
+        name.includes(search.toLowerCase()) ||
+        (c.position ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (c.country ?? "").toLowerCase().includes(search.toLowerCase());
+
+      const statusOk = statusFilter === "ALL" || c.status === statusFilter;
+
+      return searchOk && statusOk;
+    });
+  }, [candidates, search, statusFilter]);
+
+  // FILTER SAVED
+  const filteredSavedCandidates = useMemo(() => {
+    return savedCandidates.filter((c) => {
+      const name = `${c.firstName} ${c.lastName}`.toLowerCase();
+      const searchValue = search.toLowerCase();
+
+      return (
+        name.includes(searchValue) ||
+        (c.profession ?? "").toLowerCase().includes(searchValue)
+      );
+    });
+  }, [savedCandidates, search]);
+
+  const unlockContact = async (offerId: string) => {
+    try {
+      await unlockCandidateContact(offerId);
 
       setCandidates((prev) =>
-        prev.map((candidate) =>
-          candidate.workerId === candidateId
-            ? {
-                ...candidate,
-                status: "CONTACT_UNLOCKED",
-                contactUnlocked: true,
-              }
-            : candidate
+        prev.map((c) =>
+          c.processId === offerId
+            ? { ...c, status: "CONTACT_UNLOCKED", contactUnlocked: true }
+            : c
         )
       );
     } catch (err) {
@@ -126,62 +183,65 @@ export default function CompanyDashboardPage() {
     }
   };
 
+  const openSendOfferModal = (workerId: string) => {
+    setSelectedWorkerId(workerId);
+    setSelectedJobId("");
+    setOfferModalOpen(true);
+  };
+
+  const handleSendOffer = async () => {
+    if (!selectedWorkerId || !selectedJobId) return;
+
+    try {
+      setIsSendingOffer(true);
+
+      await sendJobOffer({
+        workerId: selectedWorkerId,
+        jobAdId: selectedJobId,
+      });
+
+      setOfferModalOpen(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSendingOffer(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "SENT":
         return <Badge variant="secondary">Sent</Badge>;
-
       case "VIEWED":
         return <Badge variant="outline">Viewed</Badge>;
-
       case "INTERESTED":
-        return (
-          <Badge className="bg-green-600 text-white hover:bg-green-600">
-            Interested
-          </Badge>
-        );
-
+        return <Badge className="bg-green-600 text-white">Interested</Badge>;
       case "CONTACT_UNLOCKED":
         return (
-          <Badge className="bg-blue-600 text-white hover:bg-blue-600">
-            Contact Unlocked
-          </Badge>
+          <Badge className="bg-blue-600 text-white">Contact Unlocked</Badge>
         );
-
       case "REJECTED":
         return <Badge variant="destructive">Rejected</Badge>;
-
       default:
         return <Badge>{status}</Badge>;
     }
   };
 
-  if (isLoading || !user || user.role !== "COMPANY" || isFetching) {
+  if (isLoading || !user || isFetching) {
     return (
       <div className="flex min-h-[80vh] items-center justify-center">
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <Loader2 className="size-6 animate-spin" />
-          <span>Loading dashboard...</span>
-        </div>
+        <Loader2 className="size-6 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <>
-      <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8 px-4 sm:px-6">
-        <div className="mx-auto max-w-7xl space-y-6">
-          {/* Header */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                Hiring Dashboard
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Manage candidates, offers and hiring pipeline
-              </p>
-            </div>
-
+    <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8 px-4 sm:px-6">
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* TOP METRICS */}
+        <div className="space-y-4">
+          {/* Tokens */}
+          <div className="flex justify-end">
             <Card className="w-full lg:w-[320px] border-primary/20 bg-primary/5">
               <CardContent className="flex items-center justify-between p-5">
                 <div>
@@ -193,380 +253,223 @@ export default function CompanyDashboardPage() {
                   </p>
                 </div>
 
-                <div className="flex flex-col items-end gap-2">
-                  <Coins className="size-8 text-primary" />
-
-                  <Button size="sm">Buy Tokens</Button>
-                </div>
+                <Coins className="size-8 text-primary" />
               </CardContent>
             </Card>
           </div>
 
-          {/* Stats */}
+          {/* Stats grid */}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <Card>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Total Candidates
-                    </p>
-                    <p className="text-3xl font-bold mt-1">
-                      {stats?.totalCandidates ?? 0}
-                    </p>
-                  </div>
-                  <Users className="size-8 text-muted-foreground" />
+              <CardContent className="p-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-2xl font-bold">
+                    {stats?.totalCandidates ?? 0}
+                  </p>
                 </div>
+                <Users className="size-6 text-muted-foreground" />
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Awaiting Response
-                    </p>
-                    <p className="text-3xl font-bold mt-1 text-blue-600">
-                      {stats?.awaitingResponse}
-                    </p>
-                  </div>
-                  <Clock3 className="size-8 text-blue-600" />
+              <CardContent className="p-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Awaiting</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {stats?.awaitingResponse}
+                  </p>
                 </div>
+                <Clock3 className="size-6 text-blue-600" />
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Interested</p>
-                    <p className="text-3xl font-bold mt-1 text-green-600">
-                      {stats?.interested}
-                    </p>
-                  </div>
-                  <CheckCircle2 className="size-8 text-green-600" />
+              <CardContent className="p-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Interested</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {stats?.interested}
+                  </p>
                 </div>
+                <CheckCircle2 className="size-6 text-green-600" />
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Unlocked Contacts
-                    </p>
-                    <p className="text-3xl font-bold mt-1 text-primary">
-                      {stats?.contactUnlocked}
-                    </p>
-                  </div>
-                  <Phone className="size-8 text-primary" />
+              <CardContent className="p-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Unlocked</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {stats?.contactUnlocked}
+                  </p>
                 </div>
+                <Phone className="size-6 text-primary" />
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Rejected</p>
-                    <p className="text-3xl font-bold mt-1 text-red-600">
-                      {stats?.rejected}
-                    </p>
-                  </div>
-                  <XCircle className="size-8 text-red-600" />
+              <CardContent className="p-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Rejected</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {stats?.rejected}
+                  </p>
                 </div>
+                <XCircle className="size-6 text-red-600" />
               </CardContent>
             </Card>
           </div>
-
-          {/* Filters */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
-                <div className="relative w-full lg:max-w-sm">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
-                  <Input
-                    placeholder="Search candidates..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-                    <TabsList>
-                      <TabsTrigger value="ALL">All</TabsTrigger>
-                      <TabsTrigger value="INTERESTED">Interested</TabsTrigger>
-                      <TabsTrigger value="VIEWED">Viewed</TabsTrigger>
-                      <TabsTrigger value="CONTACT_UNLOCKED">
-                        Unlocked
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-
-                  <Select>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Newest</SelectItem>
-                      <SelectItem value="oldest">Oldest</SelectItem>
-                      <SelectItem value="activity">Recent Activity</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Candidates */}
-          {filteredCandidates.length === 0 ? (
-            <Card>
-              <CardContent className="py-16 text-center">
-                <Briefcase className="mx-auto mb-4 size-10 text-muted-foreground" />
-                <p className="text-muted-foreground">No candidates found</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {filteredCandidates.map((candidate) => (
-                <Card
-                  key={candidate.workerId}
-                  className="transition-all hover:shadow-md"
-                >
-                  <CardContent className="p-6">
-                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
-                      {/* Left */}
-                      <div className="flex-1 space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                          <div>
-                            <h3 className="text-xl font-semibold">
-                              {candidate.firstName} {candidate.lastName}
-                            </h3>
-
-                            <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                              <MapPin className="size-4" />
-                              {candidate.country}
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 sm:ml-4">
-                            {candidate.hasWorkPermit && (
-                              <Badge
-                                variant="outline"
-                                className="border-green-200 bg-green-50 text-green-700"
-                              >
-                                <ShieldCheck className="mr-1 size-3" />
-                                Work Permit
-                              </Badge>
-                            )}
-
-                            {candidate.inAnotherProcess && (
-                              <Badge
-                                variant="outline"
-                                className="border-yellow-200 bg-yellow-50 text-yellow-700"
-                              >
-                                In Hiring Process
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="font-medium">{candidate.position}</p>
-
-                          <p className="text-sm text-muted-foreground">
-                            {candidate.industry}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          {getStatusBadge(candidate.status)}
-
-                          <Badge variant="secondary">
-                            €{candidate.salaryAmount}
-                          </Badge>
-                        </div>
-
-                        <div className="text-sm text-muted-foreground">
-                          Offer sent{" "}
-                          {new Date(candidate.sentAt).toLocaleDateString()}
-                        </div>
-                      </div>
-
-                      {/* Right */}
-                      <div className="flex flex-col sm:flex-row xl:flex-col gap-2 xl:w-[220px]">
-                        <Button
-                          variant="outline"
-                          onClick={() => setSelectedCandidate(candidate)}
-                        >
-                          <Eye className="mr-2 size-4" />
-                          View Details
-                        </Button>
-
-                        {!candidate.contactUnlocked &&
-                          candidate.status === "INTERESTED" && (
-                            <Button onClick={() => unlockContact(candidate.workerId)}>
-                              <Coins className="mr-2 size-4" />
-                              Unlock Contact
-                            </Button>
-                          )}
-
-                        {candidate.contactUnlocked && (
-                          <>
-                            <Button>
-                              <Phone className="mr-2 size-4" />
-                              Call Candidate
-                            </Button>
-
-                            <Button variant="outline">
-                              <Mail className="mr-2 size-4" />
-                              Send Email
-                            </Button>
-                          </>
-                        )}
-
-                        <Button
-                          variant="ghost"
-                          onClick={() =>
-                            router.push(`/profiles/${candidate.workerId}`)
-                          }
-                        >
-                          Open Full Profile
-                          <ArrowUpRight className="ml-2 size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
         </div>
+
+        {/* TABS */}
+        <Card>
+          <CardContent className="p-4 flex justify-between">
+            <Tabs value={dashboardTab} onValueChange={setDashboardTab}>
+              <TabsList>
+                <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+                <TabsTrigger value="saved">Saved</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <Input
+              className="max-w-sm"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </CardContent>
+        </Card>
+
+        {/* PIPELINE */}
+        {dashboardTab === "pipeline" && (
+          <div className="grid gap-4">
+            {filteredCandidates.map((c) => (
+              <Card key={c.workerId}>
+                <CardContent className="p-6 flex justify-between">
+                  <div>
+                    <h3 className="font-semibold">
+                      {c.firstName} {c.lastName}
+                    </h3>
+
+                    <p className="text-sm text-muted-foreground">
+                      {c.position}
+                    </p>
+
+                    <div className="flex gap-2 mt-2">
+                      {getStatusBadge(c.status)}
+                      <Badge>€{c.salaryAmount}</Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => openProfile(getProfileId(c))}
+                    >
+                      <Eye className="size-4 mr-2" />
+                      View
+                    </Button>
+
+                    {!c.contactUnlocked && c.status === "INTERESTED" && (
+                      <Button onClick={() => unlockContact(c.processId)}>
+                        Unlock
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* SAVED */}
+        {dashboardTab === "saved" && (
+          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredSavedCandidates.map((c) => (
+              <Card key={c.id}>
+                <CardContent className="p-5 space-y-3">
+                  <div>
+                    <h3 className="font-semibold">
+                      {c.firstName} {c.lastName}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {c.profession}
+                    </p>
+                  </div>
+
+                  <Button onClick={() => openSendOfferModal(c.id)}>
+                    <SendHorizonal className="size-4 mr-2" />
+                    Send Offer
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => openProfile(getProfileId(c))}
+                  >
+                    Open Profile
+                    <ArrowUpRight className="size-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Candidate Modal */}
-      <Dialog
-        open={!!selectedCandidate}
-        onOpenChange={() => setSelectedCandidate(null)}
-      >
-        <DialogContent className="max-w-2xl">
-          {selectedCandidate && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-2xl">
-                  {selectedCandidate.firstName} {selectedCandidate.lastName}
-                </DialogTitle>
+      {/* SINGLE SHARED SHEET */}
+      <ProfileDetailSheet
+        profile={selectedProfile}
+        open={isOpen}
+        onOpenChange={setIsOpen}
+      />
 
-                <DialogDescription>
-                  Candidate overview and recruitment status
-                </DialogDescription>
-              </DialogHeader>
+      <Dialog open={offerModalOpen} onOpenChange={setOfferModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Job Offer</DialogTitle>
 
-              <div className="space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Position</CardTitle>
-                    </CardHeader>
+            <DialogDescription>
+              Select which job offer you want to send to this candidate.
+            </DialogDescription>
+          </DialogHeader>
 
-                    <CardContent>
-                      <p className="font-medium">
-                        {selectedCandidate.position}
-                      </p>
+          <div className="space-y-4">
+            <Select value={selectedJobId} onValueChange={setSelectedJobId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a job offer" />
+              </SelectTrigger>
 
-                      <p className="text-sm text-muted-foreground">
-                        {selectedCandidate.industry}
-                      </p>
-                    </CardContent>
-                  </Card>
+              <SelectContent>
+                {jobs.map((job) => (
+                  <SelectItem key={job.id} value={job.id}>
+                    <div className="flex flex-col">
+                      <span>{job.position}</span>
 
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Experience</CardTitle>
-                    </CardHeader>
+                      <span className="text-xs text-muted-foreground">
+                        {job.location.city}, €{job.salaryAmount}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-                    <CardContent>
-                      <p className="font-medium">
-                        {selectedCandidate.experience}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Languages</CardTitle>
-                  </CardHeader>
-
-                  <CardContent className="flex flex-wrap gap-2">
-                    {selectedCandidate.languages?.map((lang: string) => (
-                      <Badge key={lang} variant="secondary">
-                        {lang}
-                      </Badge>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">
-                      Contact Information
-                    </CardTitle>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3">
-                    {selectedCandidate.contactUnlocked ? (
-                      <>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Phone</p>
-                          <p className="font-medium">
-                            {selectedCandidate.phone}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-sm text-muted-foreground">Email</p>
-                          <p className="font-medium">
-                            {selectedCandidate.email}
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="rounded-lg border border-dashed p-4">
-                        <p className="font-medium">Contact details locked</p>
-
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Spend 1 token to unlock candidate contact details.
-                        </p>
-
-                        <Button
-                          className="mt-4"
-                          onClick={() => {
-                            unlockContact(selectedCandidate.workerId);
-                            setSelectedCandidate({
-                              ...selectedCandidate,
-                              contactUnlocked: true,
-                              status: "CONTACT_UNLOCKED",
-                            });
-                          }}
-                        >
-                          <Coins className="mr-2 size-4" />
-                          Unlock Contact
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </>
-          )}
+            <Button
+              className="w-full"
+              disabled={!selectedJobId || isSendingOffer}
+              onClick={handleSendOffer}
+            >
+              {isSendingOffer ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <SendHorizonal className="mr-2 size-4" />
+              )}
+              Send Offer
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

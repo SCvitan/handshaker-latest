@@ -146,4 +146,11 @@ public class UserProfileController {
         return service.getDashboardProfiles(ids);
     }
 
+    @GetMapping("/batch/{id}/dashboard-summary")
+    public WorkerSummaryResponse getDashboardSummary(
+            @PathVariable UUID id
+    ) {
+        return service.getDashboardSummary(id);
+    }
+
 }
